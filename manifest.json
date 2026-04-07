@@ -1,0 +1,18 @@
+{
+    "name": "CrochetLab",
+    "short_name": "CrochetLab",
+    "description": "Sistema de gestión interna de CrochetLab",
+    "start_url": "/proyecto_login/index.php",
+    "display": "standalone",
+    "background_color": "#f0f8fa",
+    "theme_color": "#2C3E6B",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/proyecto_login/assets/img/logo.png",
+            "sizes": "500x500",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

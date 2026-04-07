@@ -1,0 +1,14 @@
+2026-02-05 12:29:26 - Login Failed: Password mismatch for 'prueba3'. Input: '12345678', Hash: '$2y$12$66NfWek.W7F79fnhcR9ZHeVW0d9XxS3EMDgmN8wPoGUvYqybPJjKW'
+2026-03-05 12:36:20 - Login Failed: User 'admin1' not found.
+2026-03-05 12:36:26 - Login Failed: User 'admin1' not found.
+2026-03-05 12:36:45 - Login Failed: Password mismatch for 'admin'. Input: 'admon1', Hash: '$2y$10$ELudPt4Az29hNI4R.2RNKeGPPfjwvR.4HFRpCUPzudkP3eSCvkxaW'
+2026-03-05 12:36:51 - Login Failed: Password mismatch for 'admin'. Input: 'admon1', Hash: '$2y$10$ELudPt4Az29hNI4R.2RNKeGPPfjwvR.4HFRpCUPzudkP3eSCvkxaW'
+2026-03-05 12:41:53 - Login Failed: Password mismatch for 'admin'. Input: 'admon1', Hash: '$2y$10$ELudPt4Az29hNI4R.2RNKeGPPfjwvR.4HFRpCUPzudkP3eSCvkxaW'
+2026-03-05 12:45:37 - Login Failed: Password mismatch for 'admin'. Input: 'admon1', Hash: '$2y$10$ELudPt4Az29hNI4R.2RNKeGPPfjwvR.4HFRpCUPzudkP3eSCvkxaW'
+2026-03-05 12:47:29 - Login Failed: Password mismatch for 'admin'. Input: 'Admin1234', Hash: '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uSc/P3ieO'
+2026-03-05 12:47:55 - Login Failed: User 'prueba4' not found.
+2026-03-05 12:48:24 - Login Failed: Password mismatch for 'admin'. Input: 'Admin1234', Hash: '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uSc/P3ieO'
+2026-03-05 12:48:30 - Login Failed: Password mismatch for 'admin'. Input: 'admon1', Hash: '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uSc/P3ieO'
+2026-03-05 12:51:39 - Login Failed: User 'admin ' not found.
+2026-03-05 13:00:12 - Login Failed: User 'prueba4' not found.
+2026-03-05 13:00:16 - Login Failed: User 'prueba2' not found.
