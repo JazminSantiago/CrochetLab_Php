@@ -4,9 +4,8 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/patrones_ctrl.php';
 require_once __DIR__ . '/../../controlador/catalogo_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'tejedor') {
-    header('Location: ../../index.php'); exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('mis_patrones', 'lectura');
 
 $ctrl      = new PatronesCtrl();
 $catCtrl   = new CatalogoCtrl();
@@ -327,6 +326,7 @@ $nombre    = $_SESSION['nombre'];
             <button class="modal-close" onclick="cerrarModal('modalContribuir')">✕</button>
         </div>
         <form action="../../controlador/patrones_ctrl.php" method="POST" enctype="multipart/form-data">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="contribuir">
             <div class="modal-body">
                 <div class="contrib-info">

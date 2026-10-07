@@ -2,6 +2,7 @@
 // controlador/pedidos_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
+require_once __DIR__ . '/../modelo/cifrado.php';
 
 class PedidosCtrl
 {
@@ -27,7 +28,7 @@ class PedidosCtrl
         $stmt = $this->db->prepare($sql);
         if ($tipo) $stmt->execute([':tipo' => $tipo]);
         else $stmt->execute();
-        return $stmt->fetchAll();
+        return descifrarFilas($stmt->fetchAll(), 'pedidos', ['cliente_contacto', 'direccion_entrega']);
     }
 
     // ── Obtener un pedido ──
@@ -40,7 +41,7 @@ class PedidosCtrl
              WHERE p.id = :id"
         );
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch();
+        return descifrarCampos($stmt->fetch(), 'pedidos', ['cliente_contacto', 'direccion_entrega']);
     }
 
     // ── Crear pedido estándar ──
@@ -101,13 +102,13 @@ class PedidosCtrl
                 ':desc'     => $datos['descripcion'],
                 ':imgref'   => $imagen_ref,
                 ':cn'       => $datos['cliente_nombre'],
-                ':cc'       => $datos['cliente_contacto'] ?? null,
+                ':cc'       => cifrar($datos['cliente_contacto'] ?? null, 'pedidos.cliente_contacto'),
                 ':fe'       => $datos['fecha_entrega'],
                 ':estado'   => 'pendiente',
                 ':prioridad'=> $datos['prioridad'] ?? 'normal',
                 ':dom'      => $domicilio ? 'true' : 'false',
                 ':cenv'     => $costo_envio,
-                ':dir'      => $direccion,
+                ':dir'      => cifrar($direccion, 'pedidos.direccion_entrega'),
                 ':uid'      => $usuario_id
             ]);
             return ['success' => true, 'mensaje' => 'Pedido personalizado creado correctamente'];
@@ -146,13 +147,13 @@ class PedidosCtrl
                 ':desc'     => $datos['descripcion'] ?? null,
                 ':imgref'   => $imagen_ref,
                 ':cn'       => $datos['cliente_nombre'] ?? null,
-                ':cc'       => $datos['cliente_contacto'] ?? null,
+                ':cc'       => cifrar($datos['cliente_contacto'] ?? null, 'pedidos.cliente_contacto'),
                 ':fe'       => $datos['fecha_entrega'],
                 ':estado'   => $datos['estado'] ?? $pedido['estado'],
                 ':prioridad'=> $datos['prioridad'] ?? $pedido['prioridad'],
                 ':dom'      => $domicilio ? 'true' : 'false',
                 ':cenv'     => $costo_envio,
-                ':dir'      => $direccion,
+                ':dir'      => cifrar($direccion, 'pedidos.direccion_entrega'),
                 ':id'       => $id
             ]);
             return ['success' => true, 'mensaje' => 'Pedido actualizado correctamente'];
@@ -200,9 +201,8 @@ class PedidosCtrl
 
 // ── Procesar POST ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-        header('Location: ../index.php'); exit();
-    }
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    requierePermiso('pedidos', 'escritura');
 
     $ctrl   = new PedidosCtrl();
     $accion = $_POST['accion'];
@@ -215,8 +215,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $resultado = $ctrl->editar($_POST['pedido_id'], $_POST, $_FILES['imagen_referencia'] ?? null);
     } elseif ($accion === 'cambiar_estado') {
         $resultado = $ctrl->cambiarEstado($_POST['pedido_id'], $_POST['estado']);
+    } else {
+        $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
     }
 
+    if (!empty($resultado['success'])) {
+        auditar($accion, 'pedidos', $_POST['pedido_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
     header('Location: ../vista/pedidos/index_pedidos.php');

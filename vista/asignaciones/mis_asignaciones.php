@@ -3,9 +3,8 @@
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/asignaciones_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'tejedor') {
-    header('Location: ../../index.php'); exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('mis_asignaciones', 'lectura');
 
 $ctrl         = new AsignacionesCtrl();
 $asignaciones = $ctrl->listarPorEmpleado($_SESSION['usuario_id']);
@@ -391,6 +390,7 @@ function diasRestantes($fecha) {
                 </div>
                 <?php else: ?>
                 <form action="../../controlador/asignaciones_ctrl.php" method="POST" class="slider-form">
+<?php echo campoCsrf(); ?>
                     <input type="hidden" name="accion" value="actualizar_progreso">
                     <input type="hidden" name="asignacion_id" value="<?php echo $a['id']; ?>">
                     <div class="slider-row">
@@ -432,6 +432,7 @@ function diasRestantes($fecha) {
                 <!-- Formulario subir nueva imagen -->
                 <form action="../../controlador/asignaciones_ctrl.php" method="POST"
                       enctype="multipart/form-data" class="prueba-form">
+<?php echo campoCsrf(); ?>
                     <input type="hidden" name="accion" value="subir_prueba">
                     <input type="hidden" name="asignacion_id" value="<?php echo $a['id']; ?>">
                     <div class="file-drop" id="drop-<?php echo $a['id']; ?>">

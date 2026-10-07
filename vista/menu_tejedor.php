@@ -3,10 +3,8 @@
 require_once __DIR__ . '/../config.php';
 
 // Solo tejedores activos
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'tejedor') {
-    header('Location: ../index.php');
-    exit();
-}
+require_once __DIR__ . '/../modelo/autorizacion.php';
+requierePermiso('mis_asignaciones', 'lectura');
 
 $nombre  = $_SESSION['nombre'];
 $usuario = $_SESSION['usuario'];
@@ -407,10 +405,12 @@ $usuario = $_SESSION['usuario'];
                 <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
                 <div class="user-info">
                     <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                    <div class="user-role">🧶 Tejedor</div>
+                    <div class="user-role">🧶 <?php echo htmlspecialchars($_SESSION['rol'] ?? 'Editor'); ?></div>
                 </div>
             </div>
+            <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
             <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
                 <input type="hidden" name="accion" value="logout">
                 <button type="submit" class="btn-logout">Cerrar sesión</button>
             </form>
@@ -423,10 +423,12 @@ $usuario = $_SESSION['usuario'];
             <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                <div class="user-role">🧶 Tejedor</div>
+                <div class="user-role">🧶 <?php echo htmlspecialchars($_SESSION['rol'] ?? 'Editor'); ?></div>
             </div>
         </div>
-        <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+        <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
+            <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="logout">
             <button type="submit" class="btn-logout" style="width:100%;">Cerrar sesión</button>
         </form>

@@ -4,9 +4,8 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/asignaciones_ctrl.php';
 require_once __DIR__ . '/../../controlador/pedidos_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../index.php'); exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('asignaciones', 'lectura');
 
 $ctrl        = new AsignacionesCtrl();
 $asignaciones = $ctrl->listar();
@@ -396,6 +395,7 @@ function prioridadBadge($p) {
                             <button class="btn-action btn-edit"
                                 onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($a)); ?>)">✏️</button>
                             <form action="../../controlador/asignaciones_ctrl.php" method="POST" style="margin:0">
+<?php echo campoCsrf(); ?>
                                 <input type="hidden" name="accion" value="eliminar">
                                 <input type="hidden" name="asignacion_id" value="<?php echo $a['id']; ?>">
                                 <button type="submit" class="btn-action btn-delete"
@@ -418,6 +418,7 @@ function prioridadBadge($p) {
             <button class="modal-close" onclick="cerrarModal('modalCrear')">✕</button>
         </div>
         <form action="../../controlador/asignaciones_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="crear">
             <div class="modal-body">
                 <div class="section-divider">Pedido</div>
@@ -482,6 +483,7 @@ function prioridadBadge($p) {
             <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
         </div>
         <form action="../../controlador/asignaciones_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="editar">
             <input type="hidden" name="asignacion_id" id="e_id">
             <div class="modal-body">

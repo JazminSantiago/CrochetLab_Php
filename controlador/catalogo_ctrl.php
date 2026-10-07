@@ -184,10 +184,8 @@ class CatalogoCtrl
 
 // ── Procesar peticiones POST ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-        header('Location: ../index.php');
-        exit();
-    }
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    requierePermiso('catalogo', 'escritura');
 
     $ctrl   = new CatalogoCtrl();
     $accion = $_POST['accion'];
@@ -198,8 +196,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $resultado = $ctrl->editar($_POST['producto_id'], $_POST, $_FILES['imagen'] ?? null);
     } elseif ($accion === 'toggle_activo') {
         $resultado = $ctrl->toggleActivo($_POST['producto_id']);
+    } else {
+        $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
     }
 
+    if (!empty($resultado['success'])) {
+        auditar($accion, 'catalogo', $_POST['producto_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
     header('Location: ../vista/catalogo/index_catalogo.php');

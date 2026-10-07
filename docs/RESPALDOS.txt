@@ -1,0 +1,53 @@
+CROCHETLAB - RESPALDOS AUTOMATICOS CIFRADOS (cada 24 h)
+=====================================================
+
+QUE HACE database/respaldo.php
+  1. Saca una copia completa de la base con pg_dump (formato personalizado).
+  2. La cifra con AES-256-GCM (clave: RESPALDO_CLAVE o, si no existe, CIFRADO_CLAVE del .env).
+     El volcado nunca se escribe en disco sin cifrar.
+  3. La guarda en RESPALDO_DESTINO (USB o disco externo) como crochetlab_AAAAMMDD_HHMMSS.dump.enc.
+  4. La verifica: vuelve a leer el archivo, lo descifra y lo compara con el original.
+  5. Borra los respaldos mas viejos y conserva los ultimos RESPALDO_CONSERVAR (14 por defecto).
+  6. Anota el resultado en respaldo.log (proyecto) y respaldos.log (destino).
+  Codigos de salida: 0 = correcto, 1 = error, 2 = destino no disponible (USB desconectado).
+
+CONFIGURACION (en el .env)
+  RESPALDO_DESTINO=E:\respaldos        (la letra del USB; la carpeta debe existir)
+  RESPALDO_CONSERVAR=14
+  PG_DUMP_RUTA=C:\Program Files\PostgreSQL\18\bin\pg_dump.exe     (solo si pg_dump no esta en el PATH)
+  Nota: pg_dump debe ser de la misma version de PostgreSQL que el servidor, o mas nueva.
+
+PROBAR A MANO
+  php database\respaldo.php
+  Debe imprimir "OK: crochetlab_... (xx KB, verificado)". Revisa que el archivo exista en el USB.
+
+PROGRAMAR CADA 24 H EN WINDOWS (Programador de tareas)
+  Abre PowerShell COMO ADMINISTRADOR y ejecuta (ajusta la ruta al proyecto):
+
+    $accion = New-ScheduledTaskAction -Execute "C:\ruta\CrochetLab_Php\database\respaldo_diario.bat"
+    $disparador = New-ScheduledTaskTrigger -Daily -At 2:00AM
+    $ajustes = New-ScheduledTaskSettingsSet -StartWhenAvailable
+    Register-ScheduledTask -TaskName "CrochetLab Respaldo" -Action $accion -Trigger $disparador -Settings $ajustes
+
+  -StartWhenAvailable hace que, si el equipo estaba apagado a las 2:00, el respaldo corra al encenderlo.
+  Para probarla ya:   Start-ScheduledTask -TaskName "CrochetLab Respaldo"
+  Para quitarla:      Unregister-ScheduledTask -TaskName "CrochetLab Respaldo" -Confirm:$false
+  (Esta parte la preparamos pero no se pudo probar en Windows desde el entorno de desarrollo:
+   verifica que despues de "Start-ScheduledTask" aparezca un archivo nuevo en el USB.)
+
+PROGRAMAR CADA 24 H EN LINUX (servidor / VM)
+  crontab -e   y agrega (ajusta las rutas):
+    0 2 * * * cd /var/www/crochetlab && php database/respaldo.php >> /var/log/crochetlab_respaldo.log 2>&1
+  El USB debe estar montado (por ejemplo en /media/usb) y RESPALDO_DESTINO apuntar a una carpeta de el.
+
+RESTAURAR UN RESPALDO
+  php database\restaurar_respaldo.php "E:\respaldos\crochetlab_20261007_020000.dump.enc" --db=sistema_login_restaurada
+  - No toca la base en uso: crea la base indicada (o agrega --sobrescribir para reemplazar una existente).
+  - Para usar la base restaurada, cambia DB_NAME en el .env.
+  - Si el archivo fue alterado, o la clave no es la correcta, se niega a restaurar y no cambia nada.
+
+IMPORTANTE
+  - Guarda CIFRADO_CLAVE / RESPALDO_CLAVE en un lugar seguro y SEPARADO del USB de respaldos:
+    sin la clave, los respaldos no se pueden abrir (eso es justo lo que los protege si roban el USB).
+  - Haz una prueba de restauracion antes de la entrega y toma captura: es la evidencia de que el respaldo sirve.
+  - El respaldo se hace en memoria: esta pensado para bases pequenas/medianas (hasta unos 400 MB).

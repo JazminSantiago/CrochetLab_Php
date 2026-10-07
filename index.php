@@ -2,10 +2,17 @@
 // index.php - Página principal de acceso al sistema
 require_once 'config.php';
 
-// Si ya hay sesión activa, redirigir al menú principal
-if (isset($_SESSION['usuario_id'])) {
-    header('Location: vista/menu_principal.php');
-    exit();
+// Si ya hay sesión activa, redirigir al panel que le corresponde según sus permisos
+require_once __DIR__ . '/modelo/autorizacion.php';
+if (usuarioAutenticado()) {
+    $destino = rutaInicio();
+    if ($destino !== null) {
+        header('Location: ' . $destino);
+        exit();
+    }
+    // Sesión sin permisos (cuenta desactivada o rol vacío): se cierra y se muestra el login
+    cerrarSesionLocal();
+    session_start();
 }
 
 ?>
@@ -423,7 +430,7 @@ if (isset($_SESSION['usuario_id'])) {
             <?php if (isset($_SESSION['mensaje'])): ?>
                 <div class="mensaje <?php echo $_SESSION['tipo_mensaje']; ?>">
                     <?php
-                        echo $_SESSION['mensaje'];
+                        echo htmlspecialchars($_SESSION['mensaje'], ENT_QUOTES, 'UTF-8');
                         unset($_SESSION['mensaje']);
                         unset($_SESSION['tipo_mensaje']);
                     ?>
@@ -432,17 +439,18 @@ if (isset($_SESSION['usuario_id'])) {
 
             <!-- Login -->
             <form action="controlador/validar_usuario.php" method="POST">
+<?php echo campoCsrf(); ?>
                     <input type="hidden" name="accion" value="login">
 
                     <div class="form-group">
-                        <label for="usuario">Usuario</label>
-                        <input type="text" id="usuario" name="usuario" required placeholder="Ingresa tu usuario">
+                        <label for="usuario">Usuario o correo</label>
+                        <input type="text" id="usuario" name="usuario" required autocomplete="username" placeholder="Tu usuario o correo">
                     </div>
 
                     <div class="form-group">
                         <label for="password">Contraseña</label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" required placeholder="••••••••">
+                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
                             <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -453,6 +461,12 @@ if (isset($_SESSION['usuario_id'])) {
                     </div>
 
                     <button type="submit" class="btn">Acceder al taller ✦</button>
+
+                    <div style="text-align:center;margin-top:16px;font-size:14px;line-height:1.9;">
+                        <a href="vista/recuperar.php" style="color:var(--coral-dark,#d97060);font-weight:700;text-decoration:none;">¿Olvidaste tu contraseña?</a><br>
+                        <span style="color:var(--text-soft,#6a7fa8);">¿Aún no tienes cuenta?</span>
+                        <a href="vista/registro.php" style="color:var(--coral-dark,#d97060);font-weight:700;text-decoration:none;">Regístrate</a>
+                    </div>
 
                     <div class="social-login">
                         <div class="social-separator">Otros métodos</div>

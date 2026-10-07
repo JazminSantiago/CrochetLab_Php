@@ -1,17 +1,13 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
     
 // vista/patrones/index_patrones.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/patrones_ctrl.php';
 require_once __DIR__ . '/../../controlador/catalogo_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../index.php'); exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('patrones', 'lectura');
 
 $ctrl      = new PatronesCtrl();
 $catCtrl   = new CatalogoCtrl();
@@ -319,6 +315,7 @@ $tab = $_GET['tab'] ?? 'aprobado';
                         <button class="btn-action btn-edit" onclick="verDetalle(<?php echo htmlspecialchars(json_encode($p)); ?>)">👁 Ver</button>
                         <button class="btn-action btn-edit" onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($p)); ?>)">✏️ Editar</button>
                         <form action="../../controlador/patrones_ctrl.php" method="POST" style="margin:0">
+<?php echo campoCsrf(); ?>
                             <input type="hidden" name="accion" value="eliminar">
                             <input type="hidden" name="patron_id" value="<?php echo $p['id']; ?>">
                             <button type="submit" class="btn-action btn-delete"
@@ -354,11 +351,13 @@ $tab = $_GET['tab'] ?? 'aprobado';
                     <div class="patron-actions">
                         <button class="btn-action btn-edit" onclick="verDetalle(<?php echo htmlspecialchars(json_encode($p)); ?>)">👁 Ver</button>
                         <form action="../../controlador/patrones_ctrl.php" method="POST" style="margin:0">
+<?php echo campoCsrf(); ?>
                             <input type="hidden" name="accion" value="aprobar">
                             <input type="hidden" name="patron_id" value="<?php echo $p['id']; ?>">
                             <button type="submit" class="btn-action btn-approve">✅ Aprobar</button>
                         </form>
                         <form action="../../controlador/patrones_ctrl.php" method="POST" style="margin:0">
+<?php echo campoCsrf(); ?>
                             <input type="hidden" name="accion" value="rechazar">
                             <input type="hidden" name="patron_id" value="<?php echo $p['id']; ?>">
                             <button type="submit" class="btn-action btn-reject"
@@ -383,6 +382,7 @@ $tab = $_GET['tab'] ?? 'aprobado';
                     <div class="patron-meta">Enviado por <?php echo htmlspecialchars($p['creado_por_nombre'] ?? '—'); ?></div>
                     <div class="patron-actions">
                         <form action="../../controlador/patrones_ctrl.php" method="POST" style="margin:0">
+<?php echo campoCsrf(); ?>
                             <input type="hidden" name="accion" value="eliminar">
                             <input type="hidden" name="patron_id" value="<?php echo $p['id']; ?>">
                             <button type="submit" class="btn-action btn-delete"
@@ -404,6 +404,7 @@ $tab = $_GET['tab'] ?? 'aprobado';
             <button class="modal-close" onclick="cerrarModal('modalForm')">✕</button>
         </div>
         <form action="../../controlador/patrones_ctrl.php" method="POST" enctype="multipart/form-data">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" id="f_accion" value="crear">
             <input type="hidden" name="patron_id" id="f_patron_id">
             <div class="modal-body">

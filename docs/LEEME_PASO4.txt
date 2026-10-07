@@ -1,0 +1,19 @@
+CrochetLab - Paso 4: panel de administración + pedidos del cliente
+
+ORDEN (importa):
+ 1) Descomprime este ZIP en una carpeta temporal.
+ 2) Ejecuta la migración UNA vez, ANTES de copiar el código:
+      psql -U postgres -d sistema_login -f database\migraciones\migracion_04_admin_y_pedidos_cliente.sql
+    Debe terminar en COMMIT (2 INSERT de permisos, 2 INSERT de rol_permisos, UPDATEs y 1 CREATE INDEX).
+ 3) Copia el contenido de CrochetLab_paso4 SOBRE tu proyecto (no incluye config.php).
+ 4) Comprueba la sintaxis:
+      Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+ 5) Prueba con php -S localhost:8000.
+
+NUEVO
+ - Menú del administrador: tarjetas "Usuarios" y "Roles y Permisos".
+ - vista/usuarios.php: lista, filtros, cambio de rol, activar/desactivar, desbloquear.
+ - vista/roles.php: crear roles, matriz de permisos (área x lectura/escritura/eliminación), eliminar roles.
+ - vista/mis_pedidos.php: el cliente (Usuario Regular) hace y cancela SUS pedidos.
+ - vista/inicio.php: inicio de roles creados por el administrador (solo muestra lo que pueden abrir).
+ - El panel del cliente ya no muestra patrones.

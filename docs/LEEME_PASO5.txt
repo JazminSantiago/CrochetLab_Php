@@ -1,0 +1,85 @@
+CROCHETLAB - PASO 5: CIFRADO DE DATOS SENSIBLES (AES-256) Y CREDENCIALES EN .env
+================================================================================
+
+QUE SE CIFRA (en la base de datos)
+  empleados.telefono, empleados.direccion
+  pedidos.cliente_contacto, pedidos.direccion_entrega
+  usuarios.totp_secreto   (secreto de la verificacion en dos pasos)
+Las contrasenas NO se cifran: se guardan con hash bcrypt (no reversible), que es lo correcto.
+El correo y el usuario tampoco se cifran porque se usan para iniciar sesion y buscar cuentas.
+
+COMO FUNCIONA
+  - Algoritmo: AES-256-GCM (OpenSSL), cifrado autenticado.
+  - La clave (32 bytes) vive en el archivo .env (CIFRADO_CLAVE), fuera de la base de datos
+    y fuera de git. Quien robe solo la base de datos no puede leer esos campos.
+  - Cada valor usa un IV aleatorio: el mismo telefono se guarda distinto cada vez.
+  - GCM detecta alteraciones: si alguien edita el valor en la base, no se descifra.
+  - El "contexto" (tabla.columna) esta autenticado: un valor no se puede copiar a otra columna.
+  - Formato guardado:  enc:v1:BASE64( IV[12] + ETIQUETA[16] + TEXTO_CIFRADO )
+  Ejemplo real de lo que ve alguien que lee la tabla empleados:
+      enc:v1:hjwRh8bm89Nxc9TiNxWmqTtBdFV5zhABRRdoq1pFUU3giEY8ciNoH...
+  La aplicacion descifra al mostrar y cifra al guardar; los usuarios no notan nada.
+
+TAMBIEN EN ESTE PASO
+  - Las credenciales de la base de datos se leen del .env (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS).
+    Si una variable no esta en .env se usa la de config.php, asi nada se rompe a medias.
+  - Un error de conexion ya no muestra usuario/servidor en pantalla (solo en el registro de errores).
+    Para ver el detalle mientras desarrollas: APP_DEBUG=true en el .env.
+  - La carpeta database/ incluye un .htaccess que impide descargarla desde el navegador (Apache).
+
+COMO APLICARLO (EL ORDEN IMPORTA)
+  1. Copia el contenido del ZIP sobre tu proyecto (no incluye config.php).
+  2. Ampliar columnas (una sola vez; sin esto guardar un empleado falla con "value too long"):
+       psql -U postgres -d sistema_login -f database\migraciones\migracion_06_columnas_cifradas.sql
+     Debe terminar en COMMIT.
+  3. Genera tu clave:
+       php database\generar_clave.php
+     Copia la linea que imprime (CIFRADO_CLAVE=...) en tu archivo .env (el de la carpeta PADRE del proyecto).
+  4. En ese mismo .env agrega tus credenciales (mira env.ejemplo):
+       DB_HOST=localhost
+       DB_PORT=5432
+       DB_NAME=sistema_login
+       DB_USER=postgres
+       DB_PASS=tu_contrasena_de_postgres
+  5. Cifra los datos que ya existian:
+       php database\cifrar_datos_existentes.php
+     Imprime cuantos valores cifro por columna. Se puede repetir sin riesgo (0 cambios la segunda vez).
+  6. Reinicia  php -S localhost:8000  y prueba (abajo).
+  7. Ya con DB_PASS en el .env, edita config.php y deja la linea asi (y haz commit de ese cambio):
+       define('DB_PASS', '');
+     Asi la contrasena de la base deja de estar en el codigo. Como la anterior estuvo en el historial
+     de git, cambiala en PostgreSQL:   ALTER USER postgres PASSWORD 'nueva';   y actualiza tu .env.
+
+LA CLAVE - IMPORTANTE
+  - Si pierdes CIFRADO_CLAVE, los datos cifrados NO se pueden recuperar. Guarda una copia en un lugar
+    seguro (gestor de contrasenas), separada de las copias de seguridad de la base.
+  - Quienes compartan la MISMA base de datos (p. ej. el servidor de la VM) deben usar la MISMA clave.
+    Cada companero con su base local puede tener su propia clave.
+  - Nunca subas el .env a git (ya esta en .gitignore).
+
+COMO PROBARLO
+  1. Como admin: Empleados > Nuevo empleado con telefono y direccion. Se ve normal en la pantalla.
+  2. En la base, el dato esta cifrado:
+       psql -U postgres -d sistema_login -c "SELECT telefono, direccion FROM empleados;"
+     Debe verse "enc:v1:..." y no el telefono.
+  3. Edita el empleado: se sigue viendo y editando normal.
+  4. Crea un pedido personalizado con contacto y direccion de entrega: igual, cifrado en la base.
+  5. Activa la verificacion en dos pasos en Mi cuenta y revisa usuarios.totp_secreto: tambien cifrado.
+  6. Cierra sesion y entra con tu codigo: funciona.
+  7. Prueba de seguridad (opcional): cambia CIFRADO_CLAVE por otra generada con generar_clave.php y abre
+     Empleados: la pagina no se cae y los telefonos/direcciones cifrados salen vacios (sin la clave correcta
+     no se leen). Si borras la clave por completo, la aplicacion muestra un mensaje claro de configuracion
+     en vez de guardar datos sin cifrar. Vuelve a poner tu clave original.
+
+QUE SE VERIFICO ANTES DE ENTREGAR (con PHP 8.3 y PostgreSQL 16 reales)
+  - 12 pruebas del modulo: ida y vuelta, IV aleatorio, otra columna no descifra, dato alterado se rechaza,
+    datos antiguos sin cifrar pasan, null/vacio intactos, Unicode, textos largos, sin clave falla con mensaje claro.
+  - Recorrido HTTP completo con sesiones reales: login, Usuarios (cambiar rol, protecciones, CSRF),
+    Roles y Permisos (crear, copiar, matriz, eliminar), Empleados y Pedidos (crear y editar cifrando),
+    Mis pedidos del cliente, 2FA con secreto antiguo y con secreto cifrado.
+  - Migracion de datos: 5 valores antiguos cifrados, segunda ejecucion sin cambios.
+
+NO CUBRE (siguientes pasos)
+  - Cifrado en transito (HTTPS en el servidor de la VM) y la evidencia con Wireshark.
+  - Usuario de base de datos con permisos minimos (en vez de postgres).
+  - Copias de seguridad automaticas cada 24 h (cifradas).

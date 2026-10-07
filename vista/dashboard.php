@@ -3,9 +3,8 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../index.php'); exit();
-}
+require_once __DIR__ . '/../modelo/autorizacion.php';
+requierePermiso('dashboard', 'lectura');
 
 $conn = new Conexion();
 $db   = $conn->conectar();

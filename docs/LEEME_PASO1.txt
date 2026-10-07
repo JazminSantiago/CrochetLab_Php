@@ -1,0 +1,12 @@
+CrochetLab - Paso 1: roles y permisos (RBAC)
+
+1) Respalda tu carpeta del proyecto.
+2) Copia el contenido de esta carpeta SOBRE tu proyecto (acepta reemplazar archivos).
+   NO incluye config.php: tu contraseña de PostgreSQL no se toca.
+3) Ejecuta la migración (una sola vez):
+     psql -U postgres -d sistema_login -f migracion_01_roles_permisos.sql
+4) Borra los archivos de debug:
+     Remove-Item debug_log.txt, debug_check_user.php, debug_web.php, info.php
+5) Verifica sintaxis PHP:
+     Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+6) Prueba: php -S localhost:8000  ->  admin / ClaveAdmin1

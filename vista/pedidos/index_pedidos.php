@@ -4,9 +4,8 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/pedidos_ctrl.php';
 require_once __DIR__ . '/../../controlador/catalogo_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../index.php'); exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('pedidos', 'lectura');
 
 $ctrl      = new PedidosCtrl();
 $catCtrl   = new CatalogoCtrl();
@@ -459,6 +458,7 @@ function diasRestantes($fecha) {
             <button class="modal-close" onclick="cerrarModal('modalOverlay')">✕</button>
         </div>
         <form action="../../controlador/pedidos_ctrl.php" method="POST" enctype="multipart/form-data">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" id="formAccion" value="crear_estandar">
             <input type="hidden" name="pedido_id" id="formPedidoId" value="">
 
@@ -588,6 +588,7 @@ function diasRestantes($fecha) {
             <button class="modal-close" onclick="cerrarModal('modalEstado')">✕</button>
         </div>
         <form action="../../controlador/pedidos_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="cambiar_estado">
             <input type="hidden" name="pedido_id" id="estadoPedidoId">
             <div class="modal-body">

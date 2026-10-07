@@ -2,6 +2,7 @@
 // controlador/empleados_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
+require_once __DIR__ . '/../modelo/cifrado.php';
 
 class EmpleadosCtrl
 {
@@ -22,7 +23,7 @@ class EmpleadosCtrl
                 JOIN usuarios u ON e.usuario_id = u.id
                 ORDER BY u.nombre ASC";
         $stmt = $this->db->query($sql);
-        return $stmt->fetchAll();
+        return descifrarFilas($stmt->fetchAll(), 'empleados', ['telefono', 'direccion']);
     }
 
     // ── Crear usuario + empleado en una transacción ──
@@ -36,8 +37,8 @@ class EmpleadosCtrl
             }
         }
 
-        if (strlen($datos['password']) < 6) {
-            return ['success' => false, 'mensaje' => 'La contraseña debe tener al menos 6 caracteres'];
+        if (($errorPolitica = validarPassword((string)$datos['password'])) !== null) {
+            return ['success' => false, 'mensaje' => $errorPolitica];
         }
 
         if (!filter_var($datos['email'], FILTER_VALIDATE_EMAIL)) {
@@ -54,11 +55,11 @@ class EmpleadosCtrl
         try {
             $this->db->beginTransaction();
 
-            // 1. Crear usuario con rol tejedor
+            // 1. Crear usuario con rol Editor
             $hash = password_hash($datos['password'], PASSWORD_BCRYPT, ['cost' => 12]);
             $stmt = $this->db->prepare(
-                "INSERT INTO usuarios (usuario, nombre, email, password, rol, activo)
-                 VALUES (:usuario, :nombre, :email, :password, 'tejedor', true)
+                "INSERT INTO usuarios (usuario, nombre, email, password, rol_id, activo)
+                 VALUES (:usuario, :nombre, :email, :password, (SELECT id FROM roles WHERE nombre = 'Editor'), true)
                  RETURNING id"
             );
             $stmt->execute([
@@ -76,8 +77,8 @@ class EmpleadosCtrl
             );
             $stmt->execute([
                 ':uid' => $usuario_id,
-                ':tel' => $datos['telefono'] ?? null,
-                ':dir' => $datos['direccion'] ?? null,
+                ':tel' => cifrar($datos['telefono'] ?? null, 'empleados.telefono'),
+                ':dir' => cifrar($datos['direccion'] ?? null, 'empleados.direccion'),
                 ':fi'  => !empty($datos['fecha_ingreso']) ? $datos['fecha_ingreso'] : date('Y-m-d'),
                 ':esp' => $datos['especialidad']
             ]);
@@ -102,7 +103,7 @@ class EmpleadosCtrl
              WHERE e.id = :id"
         );
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch();
+        return descifrarCampos($stmt->fetch(), 'empleados', ['telefono', 'direccion']);
     }
 
     // ── Editar datos laborales y de usuario ──
@@ -139,8 +140,8 @@ class EmpleadosCtrl
 
             // Si se envió nueva contraseña
             if (!empty($datos['password'])) {
-                if (strlen($datos['password']) < 6) {
-                    return ['success' => false, 'mensaje' => 'La contraseña debe tener al menos 6 caracteres'];
+                if (($errorPolitica = validarPassword((string)$datos['password'])) !== null) {
+                    return ['success' => false, 'mensaje' => $errorPolitica];
                 }
                 $sqlU .= ", password = :password";
                 $params[':password'] = password_hash($datos['password'], PASSWORD_BCRYPT, ['cost' => 12]);
@@ -154,8 +155,8 @@ class EmpleadosCtrl
                 "UPDATE empleados SET telefono = :tel, direccion = :dir,
                  fecha_ingreso = :fi, especialidad = :esp WHERE id = :id"
             )->execute([
-                ':tel' => $datos['telefono'] ?? null,
-                ':dir' => $datos['direccion'] ?? null,
+                ':tel' => cifrar($datos['telefono'] ?? null, 'empleados.telefono'),
+                ':dir' => cifrar($datos['direccion'] ?? null, 'empleados.direccion'),
                 ':fi'  => !empty($datos['fecha_ingreso']) ? $datos['fecha_ingreso'] : $emp['fecha_ingreso'],
                 ':esp' => $datos['especialidad'],
                 ':id'  => $id
@@ -187,11 +188,8 @@ class EmpleadosCtrl
 
 // ── Procesar peticiones POST ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    // Solo admins
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-        header('Location: ../index.php');
-        exit();
-    }
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    requierePermiso('empleados', 'escritura');
 
     $ctrl = new EmpleadosCtrl();
     $accion = $_POST['accion'];
@@ -204,11 +202,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 
     } elseif ($accion === 'toggle_activo') {
         $resultado = $ctrl->toggleActivo($_POST['empleado_id']);
+
+    } else {
+        $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
     }
 
+    if (!empty($resultado['success'])) {
+        auditar($accion, 'empleados', $_POST['empleado_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
-    header('Location: ../vista/empleados/index.php');
+    header('Location: ../vista/empleados/index_empleados.php');
     exit();
 }
 ?>
