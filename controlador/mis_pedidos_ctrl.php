@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
 require_once __DIR__ . '/../modelo/autorizacion.php';
+require_once __DIR__ . '/../modelo/cifrado.php';
 
 class MisPedidosCtrl
 {
@@ -100,7 +101,7 @@ class MisPedidosCtrl
                 ':cat'  => $catalogoId,
                 ':desc' => $descripcion !== '' ? $descripcion : null,
                 ':cn'   => $nombre,
-                ':cc'   => $email,
+                ':cc'   => cifrar($email, 'pedidos.cliente_contacto'),
                 ':fe'   => $fecha,
                 ':uid'  => $uid,
             ]);

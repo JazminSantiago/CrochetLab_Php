@@ -2,6 +2,7 @@
 // controlador/empleados_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
+require_once __DIR__ . '/../modelo/cifrado.php';
 
 class EmpleadosCtrl
 {
@@ -22,7 +23,7 @@ class EmpleadosCtrl
                 JOIN usuarios u ON e.usuario_id = u.id
                 ORDER BY u.nombre ASC";
         $stmt = $this->db->query($sql);
-        return $stmt->fetchAll();
+        return descifrarFilas($stmt->fetchAll(), 'empleados', ['telefono', 'direccion']);
     }
 
     // ── Crear usuario + empleado en una transacción ──
@@ -76,8 +77,8 @@ class EmpleadosCtrl
             );
             $stmt->execute([
                 ':uid' => $usuario_id,
-                ':tel' => $datos['telefono'] ?? null,
-                ':dir' => $datos['direccion'] ?? null,
+                ':tel' => cifrar($datos['telefono'] ?? null, 'empleados.telefono'),
+                ':dir' => cifrar($datos['direccion'] ?? null, 'empleados.direccion'),
                 ':fi'  => !empty($datos['fecha_ingreso']) ? $datos['fecha_ingreso'] : date('Y-m-d'),
                 ':esp' => $datos['especialidad']
             ]);
@@ -102,7 +103,7 @@ class EmpleadosCtrl
              WHERE e.id = :id"
         );
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch();
+        return descifrarCampos($stmt->fetch(), 'empleados', ['telefono', 'direccion']);
     }
 
     // ── Editar datos laborales y de usuario ──
@@ -154,8 +155,8 @@ class EmpleadosCtrl
                 "UPDATE empleados SET telefono = :tel, direccion = :dir,
                  fecha_ingreso = :fi, especialidad = :esp WHERE id = :id"
             )->execute([
-                ':tel' => $datos['telefono'] ?? null,
-                ':dir' => $datos['direccion'] ?? null,
+                ':tel' => cifrar($datos['telefono'] ?? null, 'empleados.telefono'),
+                ':dir' => cifrar($datos['direccion'] ?? null, 'empleados.direccion'),
                 ':fi'  => !empty($datos['fecha_ingreso']) ? $datos['fecha_ingreso'] : $emp['fecha_ingreso'],
                 ':esp' => $datos['especialidad'],
                 ':id'  => $id

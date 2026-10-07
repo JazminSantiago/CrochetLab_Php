@@ -1,3 +1,6 @@
+-- Forzar UTF-8 para que psql en Windows no corrompa tildes ni enes
+SET client_encoding = 'UTF8';
+
 -- =====================================================================
 -- CrochetLab - Migración 04: panel de administración y pedidos del cliente
 --

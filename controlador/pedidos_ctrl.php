@@ -2,6 +2,7 @@
 // controlador/pedidos_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
+require_once __DIR__ . '/../modelo/cifrado.php';
 
 class PedidosCtrl
 {
@@ -27,7 +28,7 @@ class PedidosCtrl
         $stmt = $this->db->prepare($sql);
         if ($tipo) $stmt->execute([':tipo' => $tipo]);
         else $stmt->execute();
-        return $stmt->fetchAll();
+        return descifrarFilas($stmt->fetchAll(), 'pedidos', ['cliente_contacto', 'direccion_entrega']);
     }
 
     // ── Obtener un pedido ──
@@ -40,7 +41,7 @@ class PedidosCtrl
              WHERE p.id = :id"
         );
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch();
+        return descifrarCampos($stmt->fetch(), 'pedidos', ['cliente_contacto', 'direccion_entrega']);
     }
 
     // ── Crear pedido estándar ──
@@ -101,13 +102,13 @@ class PedidosCtrl
                 ':desc'     => $datos['descripcion'],
                 ':imgref'   => $imagen_ref,
                 ':cn'       => $datos['cliente_nombre'],
-                ':cc'       => $datos['cliente_contacto'] ?? null,
+                ':cc'       => cifrar($datos['cliente_contacto'] ?? null, 'pedidos.cliente_contacto'),
                 ':fe'       => $datos['fecha_entrega'],
                 ':estado'   => 'pendiente',
                 ':prioridad'=> $datos['prioridad'] ?? 'normal',
                 ':dom'      => $domicilio ? 'true' : 'false',
                 ':cenv'     => $costo_envio,
-                ':dir'      => $direccion,
+                ':dir'      => cifrar($direccion, 'pedidos.direccion_entrega'),
                 ':uid'      => $usuario_id
             ]);
             return ['success' => true, 'mensaje' => 'Pedido personalizado creado correctamente'];
@@ -146,13 +147,13 @@ class PedidosCtrl
                 ':desc'     => $datos['descripcion'] ?? null,
                 ':imgref'   => $imagen_ref,
                 ':cn'       => $datos['cliente_nombre'] ?? null,
-                ':cc'       => $datos['cliente_contacto'] ?? null,
+                ':cc'       => cifrar($datos['cliente_contacto'] ?? null, 'pedidos.cliente_contacto'),
                 ':fe'       => $datos['fecha_entrega'],
                 ':estado'   => $datos['estado'] ?? $pedido['estado'],
                 ':prioridad'=> $datos['prioridad'] ?? $pedido['prioridad'],
                 ':dom'      => $domicilio ? 'true' : 'false',
                 ':cenv'     => $costo_envio,
-                ':dir'      => $direccion,
+                ':dir'      => cifrar($direccion, 'pedidos.direccion_entrega'),
                 ':id'       => $id
             ]);
             return ['success' => true, 'mensaje' => 'Pedido actualizado correctamente'];

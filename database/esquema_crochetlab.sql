@@ -1,3 +1,6 @@
+-- Forzar UTF-8 para que psql en Windows no corrompa tildes ni enes
+SET client_encoding = 'UTF8';
+
 -- =====================================================================
 -- CrochetLab - Esquema PostgreSQL RECONSTRUIDO a partir del código PHP
 -- Base de datos: sistema_login

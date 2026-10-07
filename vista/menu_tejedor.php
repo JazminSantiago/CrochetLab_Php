@@ -405,7 +405,7 @@ $usuario = $_SESSION['usuario'];
                 <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
                 <div class="user-info">
                     <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                    <div class="user-role">🧶 Tejedor</div>
+                    <div class="user-role">🧶 <?php echo htmlspecialchars($_SESSION['rol'] ?? 'Editor'); ?></div>
                 </div>
             </div>
             <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
@@ -423,7 +423,7 @@ $usuario = $_SESSION['usuario'];
             <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                <div class="user-role">🧶 Tejedor</div>
+                <div class="user-role">🧶 <?php echo htmlspecialchars($_SESSION['rol'] ?? 'Editor'); ?></div>
             </div>
         </div>
         <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>

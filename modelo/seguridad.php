@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/env.php';
 require_once __DIR__ . '/registro.php';
+require_once __DIR__ . '/cifrado.php';
 
 // ── Parámetros ──
 if (!defined('LOGIN_MAX_INTENTOS'))    define('LOGIN_MAX_INTENTOS', 5);     // fallos por cuenta antes de bloquear
@@ -185,7 +186,7 @@ function verificarSegundoFactor(PDO $db, array $usuario, string $codigo): bool
     $codigo = preg_replace('/[\s-]/', '', $codigo);
 
     if (preg_match('/^\d{6}$/', $codigo)) {
-        $paso = totpVerificar((string)$usuario['totp_secreto'], $codigo, (int)$usuario['totp_ultimo_paso']);
+        $paso = totpVerificar((string)descifrar($usuario['totp_secreto'] ?? null, 'usuarios.totp_secreto'), $codigo, (int)$usuario['totp_ultimo_paso']);
         if ($paso === null) {
             return false;
         }

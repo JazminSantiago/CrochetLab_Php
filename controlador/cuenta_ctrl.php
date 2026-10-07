@@ -74,7 +74,7 @@ class CuentaCtrl
 
         $this->db->prepare(
             "UPDATE usuarios SET totp_secreto = :s, totp_activo = TRUE, totp_ultimo_paso = :p WHERE id = :id"
-        )->execute([':s' => $secreto, ':p' => $paso, ':id' => $uid]);
+        )->execute([':s' => cifrar($secreto, 'usuarios.totp_secreto'), ':p' => $paso, ':id' => $uid]);
 
         $_SESSION['codigos_nuevos'] = generarCodigosRespaldo($this->db, (int)$uid);
         unset($_SESSION['totp_pendiente']);
