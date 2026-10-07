@@ -97,7 +97,12 @@ class AsignacionesCtrl
     public function listarTejedores()
     {
         $stmt = $this->db->prepare(
-            "SELECT id, nombre FROM usuarios WHERE rol = 'tejedor' AND activo = true ORDER BY nombre ASC"
+            "SELECT u.id, u.nombre FROM usuarios u
+             WHERE u.activo = true
+               AND EXISTS (SELECT 1 FROM empleados e WHERE e.usuario_id = u.id)
+               AND EXISTS (SELECT 1 FROM rol_permisos rp JOIN permisos p ON p.id = rp.permiso_id
+                           WHERE rp.rol_id = u.rol_id AND p.area = 'mis_asignaciones' AND p.accion = 'lectura')
+             ORDER BY u.nombre ASC"
         );
         $stmt->execute();
         return $stmt->fetchAll();
@@ -226,23 +231,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         header('Location: ../index.php'); exit();
     }
 
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    verificarCsrf();
+
     $ctrl   = new AsignacionesCtrl();
     $accion = $_POST['accion'];
-    $rol    = $_SESSION['rol'];
 
-    if ($accion === 'crear' && $rol === 'admin') {
+    if ($accion === 'crear' && tienePermiso('asignaciones', 'escritura')) {
         $resultado = $ctrl->crear($_POST);
         header('Location: ../vista/asignaciones/index_asignaciones.php');
 
-    } elseif ($accion === 'editar' && $rol === 'admin') {
+    } elseif ($accion === 'editar' && tienePermiso('asignaciones', 'escritura')) {
         $resultado = $ctrl->editar($_POST['asignacion_id'], $_POST);
         header('Location: ../vista/asignaciones/index_asignaciones.php');
 
-    } elseif ($accion === 'eliminar' && $rol === 'admin') {
+    } elseif ($accion === 'eliminar' && tienePermiso('asignaciones', 'eliminacion')) {
         $resultado = $ctrl->eliminar($_POST['asignacion_id']);
         header('Location: ../vista/asignaciones/index_asignaciones.php');
 
-    } elseif ($accion === 'actualizar_progreso' && $rol === 'tejedor') {
+    } elseif ($accion === 'actualizar_progreso' && tienePermiso('mis_asignaciones', 'escritura')) {
         $resultado = $ctrl->actualizarProgreso(
             $_POST['asignacion_id'],
             $_SESSION['usuario_id'],
@@ -251,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         );
         header('Location: ../vista/asignaciones/mis_asignaciones.php');
 
-    } elseif ($accion === 'subir_prueba' && $rol === 'tejedor') {
+    } elseif ($accion === 'subir_prueba' && tienePermiso('mis_asignaciones', 'escritura')) {
         $resultado = $ctrl->subirImagenPrueba(
             $_POST['asignacion_id'],
             $_SESSION['usuario_id'],
@@ -261,9 +268,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 
     } else {
         $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
+        auditar('acceso_denegado', 'asignaciones', null, 'Acción no permitida: ' . $accion);
         header('Location: ../index.php');
     }
 
+    if (!empty($resultado['success'])) {
+        $areaAud = in_array($accion, ['actualizar_progreso', 'subir_prueba'], true) ? 'mis_asignaciones' : 'asignaciones';
+        auditar($accion, $areaAud, $_POST['asignacion_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
     exit();

@@ -1,0 +1,5 @@
+# Credenciales y archivos locales: no subir al repositorio
+.env
+debug_log.txt
+*.log
+assets/uploads/

@@ -30,8 +30,8 @@ class PermisosCtrl
         if ($nueva !== $confirmar)
             return ['success' => false, 'mensaje' => 'La nueva contraseña y su confirmación no coinciden'];
 
-        if (strlen($nueva) < 6)
-            return ['success' => false, 'mensaje' => 'La nueva contraseña debe tener al menos 6 caracteres'];
+        if (($errorPolitica = validarPassword($nueva)) !== null)
+            return ['success' => false, 'mensaje' => $errorPolitica];
 
         $stmt = $this->db->prepare("SELECT password FROM usuarios WHERE id = :id");
         $stmt->execute([':id' => $usuario_id]);
@@ -53,7 +53,7 @@ class PermisosCtrl
         $stmt = $this->db->query(
             "SELECT id, nombre, usuario, email, es_superadmin, ultimo_acceso
              FROM usuarios
-             WHERE rol = 'admin'
+             WHERE rol_id = (SELECT id FROM roles WHERE nombre = 'Administrador')
              ORDER BY es_superadmin DESC, nombre ASC"
         );
         return $stmt->fetchAll();
@@ -65,7 +65,7 @@ class PermisosCtrl
         $stmt = $this->db->query(
             "SELECT id, nombre, usuario, email, ultimo_acceso
              FROM usuarios
-             WHERE rol = 'tejedor' AND activo = true
+             WHERE rol_id = (SELECT id FROM roles WHERE nombre = 'Editor') AND activo = true
              ORDER BY nombre ASC"
         );
         return $stmt->fetchAll();
@@ -84,13 +84,13 @@ class PermisosCtrl
         if (!$user || !password_verify($password_confirm, $user['password']))
             return ['success' => false, 'mensaje' => 'Contraseña incorrecta'];
 
-        $stmt = $this->db->prepare("SELECT nombre, rol FROM usuarios WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT u.nombre, r.nombre AS rol FROM usuarios u JOIN roles r ON r.id = u.rol_id WHERE u.id = :id");
         $stmt->execute([':id' => $target_id]);
         $target = $stmt->fetch();
         if (!$target) return ['success' => false, 'mensaje' => 'Usuario no encontrado'];
-        if ($target['rol'] === 'admin') return ['success' => false, 'mensaje' => 'El usuario ya es admin'];
+        if ($target['rol'] === 'Administrador') return ['success' => false, 'mensaje' => 'El usuario ya es admin'];
 
-        $this->db->prepare("UPDATE usuarios SET rol = 'admin' WHERE id = :id")
+        $this->db->prepare("UPDATE usuarios SET rol_id = (SELECT id FROM roles WHERE nombre = 'Administrador') WHERE id = :id")
                  ->execute([':id' => $target_id]);
 
         $this->registrarLog($solicitante_id, 'promover_admin', "Promovió a {$target['nombre']} (ID:{$target_id}) a admin");
@@ -114,14 +114,14 @@ class PermisosCtrl
         if (!$user || !password_verify($password_confirm, $user['password']))
             return ['success' => false, 'mensaje' => 'Contraseña incorrecta'];
 
-        $stmt = $this->db->prepare("SELECT nombre, rol, es_superadmin FROM usuarios WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT u.nombre, r.nombre AS rol, u.es_superadmin FROM usuarios u JOIN roles r ON r.id = u.rol_id WHERE u.id = :id");
         $stmt->execute([':id' => $target_id]);
         $target = $stmt->fetch();
         if (!$target) return ['success' => false, 'mensaje' => 'Usuario no encontrado'];
         if ($target['es_superadmin']) return ['success' => false, 'mensaje' => 'No puedes degradar al superadmin'];
-        if ($target['rol'] !== 'admin') return ['success' => false, 'mensaje' => 'El usuario no es admin'];
+        if ($target['rol'] !== 'Administrador') return ['success' => false, 'mensaje' => 'El usuario no es admin'];
 
-        $this->db->prepare("UPDATE usuarios SET rol = 'tejedor' WHERE id = :id")
+        $this->db->prepare("UPDATE usuarios SET rol_id = (SELECT id FROM roles WHERE nombre = 'Editor') WHERE id = :id")
                  ->execute([':id' => $target_id]);
 
         $this->registrarLog($solicitante_id, 'degradar_admin', "Degradó a {$target['nombre']} (ID:{$target_id}) a tejedor");
@@ -146,9 +146,8 @@ class PermisosCtrl
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME']) &&
     $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-        header('Location: ../index.php'); exit();
-    }
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    requierePermiso('usuarios', 'lectura');
 
     $ctrl   = new PermisosCtrl();
     $uid    = $_SESSION['usuario_id'];
@@ -157,14 +156,19 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME']) &&
     if ($accion === 'cambiar_password') {
         $resultado = $ctrl->cambiarPassword($uid, $_POST['actual'], $_POST['nueva'], $_POST['confirmar']);
 
-    } elseif ($accion === 'promover' && $ctrl->esSuperadmin($uid)) {
+    } elseif ($accion === 'promover' && tienePermiso('usuarios', 'escritura') && $ctrl->esSuperadmin($uid)) {
         $resultado = $ctrl->promoverAdmin($_POST['target_id'], $uid, $_POST['password_confirm']);
 
-    } elseif ($accion === 'degradar' && $ctrl->esSuperadmin($uid)) {
+    } elseif ($accion === 'degradar' && tienePermiso('usuarios', 'escritura') && $ctrl->esSuperadmin($uid)) {
         $resultado = $ctrl->degradarAdmin($_POST['target_id'], $uid, $_POST['password_confirm']);
 
     } else {
         $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
+        auditar('acceso_denegado', 'usuarios', $_POST['target_id'] ?? null, 'Acción no permitida: ' . $accion);
+    }
+
+    if (!empty($resultado['success'])) {
+        auditar($accion, 'usuarios', $_POST['target_id'] ?? null, $resultado['mensaje']);
     }
 
     $_SESSION['mensaje']      = $resultado['mensaje'];

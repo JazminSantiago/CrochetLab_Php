@@ -7,10 +7,8 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/empleados_ctrl.php';
 
 // Solo admins
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../index.php');
-    exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('empleados', 'lectura');
 
 $ctrl      = new EmpleadosCtrl();
 $empleados = $ctrl->listar();
@@ -533,6 +531,7 @@ $especialidades = ['Amigurumis','Bolsos','Ropa','Accesorios','General'];
                                 ✏️ Editar
                             </button>
                             <form action="../../controlador/empleados_ctrl.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
                                 <input type="hidden" name="accion" value="toggle_activo">
                                 <input type="hidden" name="empleado_id" value="<?php echo $e['id']; ?>">
                                 <button type="submit" class="btn-action <?php echo $e['activo'] ? 'btn-deactivate' : 'btn-activate'; ?>"
@@ -558,6 +557,7 @@ $especialidades = ['Amigurumis','Bolsos','Ropa','Accesorios','General'];
             <button class="modal-close" onclick="cerrarModal()">✕</button>
         </div>
         <form action="../../controlador/empleados_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" id="formAccion" value="crear">
             <input type="hidden" name="empleado_id" id="formEmpleadoId" value="">
 

@@ -239,34 +239,40 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME']) &&
         header('Location: ../index.php'); exit();
     }
 
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    verificarCsrf();
+
     $ctrl   = new PatronesCtrl();
     $accion = $_POST['accion'];
-    $rol    = $_SESSION['rol'];
     $uid    = $_SESSION['usuario_id'];
 
-    if ($accion === 'crear' && $rol === 'admin') {
+    if ($accion === 'crear' && tienePermiso('patrones', 'escritura')) {
         $resultado = $ctrl->crear($_POST, $_FILES['imagen'] ?? null, $uid);
         header('Location: ../vista/patrones/index_patrones.php');
-    } elseif ($accion === 'editar' && $rol === 'admin') {
+    } elseif ($accion === 'editar' && tienePermiso('patrones', 'escritura')) {
         $resultado = $ctrl->editar($_POST['patron_id'], $_POST, $_FILES['imagen'] ?? null);
         header('Location: ../vista/patrones/index_patrones.php');
-    } elseif ($accion === 'eliminar' && $rol === 'admin') {
+    } elseif ($accion === 'eliminar' && tienePermiso('patrones', 'eliminacion')) {
         $resultado = $ctrl->eliminar($_POST['patron_id']);
         header('Location: ../vista/patrones/index_patrones.php');
-    } elseif ($accion === 'aprobar' && $rol === 'admin') {
+    } elseif ($accion === 'aprobar' && tienePermiso('patrones', 'escritura')) {
         $resultado = $ctrl->aprobar($_POST['patron_id']);
         header('Location: ../vista/patrones/index_patrones.php');
-    } elseif ($accion === 'rechazar' && $rol === 'admin') {
+    } elseif ($accion === 'rechazar' && tienePermiso('patrones', 'escritura')) {
         $resultado = $ctrl->rechazar($_POST['patron_id']);
         header('Location: ../vista/patrones/index_patrones.php');
-    } elseif ($accion === 'contribuir' && $rol === 'tejedor') {
+    } elseif ($accion === 'contribuir' && tienePermiso('mis_patrones', 'escritura')) {
         $resultado = $ctrl->subirContribucion($_POST, $_FILES['imagen'] ?? null, $uid);
         header('Location: ../vista/patrones/mis_patrones.php');
     } else {
         $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
+        auditar('acceso_denegado', 'patrones', null, 'Acción no permitida: ' . $accion);
         header('Location: ../index.php');
     }
 
+    if (!empty($resultado['success'])) {
+        auditar($accion, $accion === 'contribuir' ? 'mis_patrones' : 'patrones', $_POST['patron_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
     exit();

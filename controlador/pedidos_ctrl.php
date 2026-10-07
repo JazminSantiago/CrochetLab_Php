@@ -200,9 +200,8 @@ class PedidosCtrl
 
 // ── Procesar POST ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-        header('Location: ../index.php'); exit();
-    }
+    require_once __DIR__ . '/../modelo/autorizacion.php';
+    requierePermiso('pedidos', 'escritura');
 
     $ctrl   = new PedidosCtrl();
     $accion = $_POST['accion'];
@@ -215,8 +214,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $resultado = $ctrl->editar($_POST['pedido_id'], $_POST, $_FILES['imagen_referencia'] ?? null);
     } elseif ($accion === 'cambiar_estado') {
         $resultado = $ctrl->cambiarEstado($_POST['pedido_id'], $_POST['estado']);
+    } else {
+        $resultado = ['success' => false, 'mensaje' => 'Acción no permitida'];
     }
 
+    if (!empty($resultado['success'])) {
+        auditar($accion, 'pedidos', $_POST['pedido_id'] ?? null, $resultado['mensaje']);
+    }
     $_SESSION['mensaje']      = $resultado['mensaje'];
     $_SESSION['tipo_mensaje'] = $resultado['success'] ? 'success' : 'error';
     header('Location: ../vista/pedidos/index_pedidos.php');

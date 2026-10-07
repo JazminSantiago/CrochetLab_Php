@@ -1,0 +1,7 @@
+CrochetLab - Paso 2: historial de accesos y auditoría
+
+1) Copia el contenido de esta carpeta SOBRE tu proyecto (acepta reemplazar). No incluye config.php.
+2) Ejecuta la migración UNA vez:
+     psql -U postgres -d sistema_login -f migracion_02_auditoria.sql
+3) Prueba: inicia sesión con una contraseña mala, luego la buena, crea/edita algo y entra a
+   Menú -> Auditoría y Accesos.

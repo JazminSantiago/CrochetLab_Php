@@ -1,20 +1,38 @@
 <?php
-// vista/menu_tejedor.php
+// vista/menu_usuario.php
+// Panel de solo lectura para el rol "Usuario Regular": consulta catálogo y patrones aprobados.
 require_once __DIR__ . '/../config.php';
-
-// Solo tejedores activos
+require_once __DIR__ . '/../modelo/conexion.php';
 require_once __DIR__ . '/../modelo/autorizacion.php';
-requierePermiso('mis_asignaciones', 'lectura');
+requierePermiso('contenido', 'lectura');
 
 $nombre  = $_SESSION['nombre'];
 $usuario = $_SESSION['usuario'];
+
+$db = (new Conexion())->conectar();
+
+$productos = $db->query(
+    "SELECT c.nombre, c.descripcion, c.precio, c.imagen_ruta, cat.nombre AS categoria
+     FROM catalogo c
+     LEFT JOIN categorias cat ON cat.id = c.categoria_id
+     WHERE c.activo = TRUE
+     ORDER BY cat.nombre ASC NULLS LAST, c.nombre ASC"
+)->fetchAll();
+
+$patrones = $db->query(
+    "SELECT p.titulo, p.instrucciones, p.imagen_ruta, c.nombre AS producto_nombre
+     FROM patrones p
+     LEFT JOIN catalogo c ON c.id = p.catalogo_id
+     WHERE p.estado = 'aprobado'
+     ORDER BY c.nombre ASC NULLS LAST, p.titulo ASC"
+)->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrochetLab — Mi Panel</title>
+    <title>CrochetLab — Catálogo y Patrones</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
@@ -383,8 +401,21 @@ $usuario = $_SESSION['usuario'];
             .menu-grid { grid-template-columns: 1fr; }
             .welcome-text h1 { font-size: 22px; }
         }
+    
+
+        /* ── Solo lectura: tarjetas de contenido ── */
+        .prod-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .prod-img { width: 100%; height: 170px; object-fit: cover; display: block; background: var(--sky-pale); }
+        .prod-img-empty { width: 100%; height: 170px; display: flex; align-items: center; justify-content: center; font-size: 42px; background: var(--sky-pale); }
+        .prod-body { padding: 16px 18px 20px; }
+        .prod-cat { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
+        .prod-name { font-family: 'DM Serif Display', serif; font-size: 18px; margin: 4px 0 6px; }
+        .prod-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
+        .prod-price { margin-top: 10px; font-weight: 800; color: var(--coral-dark); }
+        .vacio { color: var(--text-soft); padding: 8px 2px 24px; }
+        .patron-detalle summary { cursor: pointer; font-weight: 700; color: var(--navy-light); margin-top: 10px; }
+        .patron-detalle p { white-space: pre-line; font-size: 13.5px; color: var(--text-soft); margin-top: 8px; line-height: 1.55; }
     </style>
-</head>
 <body>
 
     <!-- NAVBAR -->
@@ -405,7 +436,7 @@ $usuario = $_SESSION['usuario'];
                 <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
                 <div class="user-info">
                     <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                    <div class="user-role">🧶 Tejedor</div>
+                    <div class="user-role">👤 Usuario</div>
                 </div>
             </div>
             <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
@@ -423,7 +454,7 @@ $usuario = $_SESSION['usuario'];
             <div class="user-avatar"><?php echo strtoupper(substr($nombre, 0, 1)); ?></div>
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($nombre); ?></div>
-                <div class="user-role">🧶 Tejedor</div>
+                <div class="user-role">👤 Usuario</div>
             </div>
         </div>
         <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
@@ -434,14 +465,12 @@ $usuario = $_SESSION['usuario'];
         </form>
     </div>
 
-    <!-- MAIN -->
     <div class="container">
 
-        <!-- Welcome Banner -->
         <div class="welcome-banner">
             <div class="welcome-text">
                 <h1>¡Hola, <span><?php echo htmlspecialchars($nombre); ?></span>! 🧶</h1>
-                <p>Aquí puedes ver y gestionar tus pedidos asignados</p>
+                <p>Explora los productos de CrochetLab y consulta nuestros patrones.</p>
             </div>
             <div class="welcome-badge">
                 <div class="date">Hoy</div>
@@ -449,42 +478,60 @@ $usuario = $_SESSION['usuario'];
             </div>
         </div>
 
-        <!-- Módulos -->
-        <div class="section-title">Mi espacio de trabajo</div>
-
+        <div class="section-title">Catálogo</div>
+        <?php if (!$productos): ?>
+            <p class="vacio">Aún no hay productos disponibles.</p>
+        <?php else: ?>
         <div class="menu-grid">
-
-            <!-- Mis Asignaciones -->
-            <a href="asignaciones/mis_asignaciones.php" class="menu-card card-asignaciones">
-                <div class="card-icon-wrap">📋</div>
-                <div class="card-title">Mis Asignaciones</div>
-                <div class="card-desc">Pedidos que tienes asignados. Acéptalos, márcalos en progreso o como terminados.</div>
-                <div class="chip-list">
-                    <span class="chip chip-pending">⏳ Pendiente</span>
-                    <span class="chip chip-progress">🔄 En progreso</span>
-                    <span class="chip chip-done">✅ Terminado</span>
-                    <span class="chip chip-critical">⚠ Urgente</span>
+            <?php foreach ($productos as $p): ?>
+            <div class="prod-card">
+                <?php if (!empty($p['imagen_ruta'])): ?>
+                    <img class="prod-img" src="../<?php echo htmlspecialchars($p['imagen_ruta']); ?>" alt="">
+                <?php else: ?>
+                    <div class="prod-img-empty">🧶</div>
+                <?php endif; ?>
+                <div class="prod-body">
+                    <div class="prod-cat"><?php echo htmlspecialchars($p['categoria'] ?? 'Sin categoría'); ?></div>
+                    <div class="prod-name"><?php echo htmlspecialchars($p['nombre']); ?></div>
+                    <div class="prod-desc"><?php echo htmlspecialchars($p['descripcion'] ?? ''); ?></div>
+                    <?php if ($p['precio'] !== null): ?>
+                        <div class="prod-price">$<?php echo number_format((float)$p['precio'], 2); ?></div>
+                    <?php endif; ?>
                 </div>
-            </a>
-
-            <!-- Patrones -->
-            <a href="patrones/mis_patrones.php" class="menu-card card-patrones">
-                <div class="card-icon-wrap">📐</div>
-                <div class="card-title">Patrones</div>
-                <div class="card-desc">Consulta los patrones e instrucciones de los productos del catálogo para elaborarlos correctamente.</div>
-            </a>
-
-            <!-- Mi Progreso -->
-            <a href="mi_progreso.php" class="menu-card card-progreso">
-                <div class="card-icon-wrap">📊</div>
-                <div class="card-title">Mi Progreso</div>
-                <div class="card-desc">Revisa tu historial de pedidos completados, puntualidad y tu desempeño general.</div>
-            </a>
-
+            </div>
+            <?php endforeach; ?>
         </div>
+        <?php endif; ?>
+
+        <div class="section-title" style="margin-top:36px;">Patrones</div>
+        <?php if (!$patrones): ?>
+            <p class="vacio">Aún no hay patrones publicados.</p>
+        <?php else: ?>
+        <div class="menu-grid">
+            <?php foreach ($patrones as $pt): ?>
+            <div class="prod-card">
+                <?php if (!empty($pt['imagen_ruta'])): ?>
+                    <img class="prod-img" src="../<?php echo htmlspecialchars($pt['imagen_ruta']); ?>" alt="">
+                <?php else: ?>
+                    <div class="prod-img-empty">📐</div>
+                <?php endif; ?>
+                <div class="prod-body">
+                    <div class="prod-cat"><?php echo htmlspecialchars($pt['producto_nombre'] ?? 'General'); ?></div>
+                    <div class="prod-name"><?php echo htmlspecialchars($pt['titulo']); ?></div>
+                    <?php if (!empty($pt['instrucciones'])): ?>
+                    <details class="patron-detalle">
+                        <summary>Ver instrucciones</summary>
+                        <p><?php echo htmlspecialchars($pt['instrucciones']); ?></p>
+                    </details>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
     </div>
 
-    <!-- FOOTER -->
     <div class="footer">
         <div class="footer-dots">
             <span style="background:var(--coral)"></span>
@@ -493,14 +540,13 @@ $usuario = $_SESSION['usuario'];
             <span style="background:var(--lavender)"></span>
             <span style="background:var(--sky)"></span>
         </div>
-        &copy; <?php echo date('Y'); ?> CrochetLab — Sistema de Gestión Interna
+        &copy; <?php echo date('Y'); ?> CrochetLab
     </div>
 
     <script>
         function toggleDrawer() {
             document.getElementById('mobileDrawer').classList.toggle('active');
         }
-
         document.addEventListener('click', function(e) {
             const drawer = document.getElementById('mobileDrawer');
             const toggle = document.querySelector('.menu-toggle');

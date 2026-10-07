@@ -7,11 +7,10 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
-// Solo admins pueden ver este panel
-if ($_SESSION['rol'] !== 'admin') {
-    header('Location: menu_tejedor.php');
-    exit();
-}
+require_once __DIR__ . '/../modelo/autorizacion.php';
+
+// Solo quien tenga acceso al dashboard ve este panel
+requierePermiso('dashboard', 'lectura');
 
 $nombre  = $_SESSION['nombre'];
 $usuario = $_SESSION['usuario'];
@@ -469,7 +468,9 @@ $usuario = $_SESSION['usuario'];
                     <div class="user-role">@<?php echo htmlspecialchars($usuario); ?></div>
                 </div>
             </div>
+            <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
             <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
                 <input type="hidden" name="accion" value="logout">
                 <button type="submit" class="btn-logout">Cerrar sesión</button>
             </form>
@@ -485,7 +486,9 @@ $usuario = $_SESSION['usuario'];
                 <div class="user-role">@<?php echo htmlspecialchars($usuario); ?></div>
             </div>
         </div>
-        <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+        <a href="mi_cuenta.php" class="btn-logout" style="text-decoration:none;display:inline-block;margin-right:8px;">Mi cuenta</a>
+            <form action="../controlador/validar_usuario.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="logout">
             <button type="submit" class="btn-logout" style="width:100%;">Cerrar sesión</button>
         </form>
@@ -566,6 +569,15 @@ $usuario = $_SESSION['usuario'];
                 <div class="card-title">Permisos y Acceso</div>
                 <div class="card-desc">Cambia tu contraseña y gestiona los roles de administrador del sistema.</div>
             </a>
+
+            <?php if (tienePermiso('auditoria', 'lectura')): ?>
+            <!-- Auditoría y Accesos -->
+            <a href="auditoria.php" class="menu-card card-config">
+                <div class="card-icon-wrap">🧾</div>
+                <div class="card-title">Auditoría y Accesos</div>
+                <div class="card-desc">Historial de inicios de sesión (con IP y fallos) y registro de las acciones de los usuarios.</div>
+            </a>
+            <?php endif; ?>
 
         </div>
     </div>

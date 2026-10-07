@@ -3,10 +3,8 @@
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../controlador/catalogo_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../index.php');
-    exit();
-}
+require_once __DIR__ . '/../../modelo/autorizacion.php';
+requierePermiso('catalogo', 'lectura');
 
 $ctrl       = new CatalogoCtrl();
 $productos  = $ctrl->listar();
@@ -456,6 +454,7 @@ $categorias = $ctrl->listarCategorias();
                                 ✏️ Editar
                             </button>
                             <form action="../../controlador/catalogo_ctrl.php" method="POST" style="margin:0;">
+<?php echo campoCsrf(); ?>
                                 <input type="hidden" name="accion" value="toggle_activo">
                                 <input type="hidden" name="producto_id" value="<?php echo $p['id']; ?>">
                                 <button type="submit"
@@ -482,6 +481,7 @@ $categorias = $ctrl->listarCategorias();
             <button class="modal-close" onclick="cerrarModal()">✕</button>
         </div>
         <form action="../../controlador/catalogo_ctrl.php" method="POST" enctype="multipart/form-data">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" id="formAccion" value="crear">
             <input type="hidden" name="producto_id" id="formProductoId" value="">
 

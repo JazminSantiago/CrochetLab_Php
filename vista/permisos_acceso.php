@@ -3,9 +3,8 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../controlador/permisos_ctrl.php';
 
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../index.php'); exit();
-}
+require_once __DIR__ . '/../modelo/autorizacion.php';
+requierePermiso('usuarios', 'lectura');
 
 $ctrl        = new PermisosCtrl();
 $uid         = $_SESSION['usuario_id'];
@@ -225,6 +224,7 @@ $tejedores   = $ctrl->listarTejedores();
                 </div>
             </div>
             <form action="../controlador/permisos_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
                 <input type="hidden" name="accion" value="cambiar_password">
                 <div class="form-group">
                     <label>Contraseña actual <span class="required">*</span></label>
@@ -331,6 +331,7 @@ $tejedores   = $ctrl->listarTejedores();
             <button class="modal-close" onclick="cerrar('modalPromover')">✕</button>
         </div>
         <form action="../controlador/permisos_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="promover">
             <div class="modal-body">
                 <div class="form-group">
@@ -363,6 +364,7 @@ $tejedores   = $ctrl->listarTejedores();
             <button class="modal-close" onclick="cerrar('modalDegradary')">✕</button>
         </div>
         <form action="../controlador/permisos_ctrl.php" method="POST">
+<?php echo campoCsrf(); ?>
             <input type="hidden" name="accion" value="degradar">
             <div class="modal-body">
                 <div class="warning-box">
