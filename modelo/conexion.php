@@ -16,9 +16,15 @@ class Conexion {
         $name = env('DB_NAME', defined('DB_NAME') ? DB_NAME : 'sistema_login');
         $user = env('DB_USER', defined('DB_USER') ? DB_USER : 'postgres');
         $pass = env('DB_PASS', defined('DB_PASS') ? DB_PASS : '');
+        // disable | prefer (por defecto) | require | verify-full. En producción usa "require": el tráfico
+        // entre el servidor web y el de base de datos viaja cifrado con TLS.
+        $ssl  = env('DB_SSLMODE', 'prefer');
+        if (!in_array($ssl, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
+            $ssl = 'prefer';
+        }
 
         try {
-            $dsn = "pgsql:host=$host;port=$port;dbname=$name";
+            $dsn = "pgsql:host=$host;port=$port;dbname=$name;sslmode=$ssl";
             $this->conexion = new PDO($dsn, $user, $pass);
             $this->conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $this->conexion;

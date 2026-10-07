@@ -3,5 +3,8 @@
 debug_log.txt
 *.log
 assets/uploads/
-
+# Correos de prueba (traen enlaces de recuperación)
 correos_salida/
+# Respaldos de la base de datos (si se guardan dentro del proyecto)
+respaldos/
+*.dump.enc

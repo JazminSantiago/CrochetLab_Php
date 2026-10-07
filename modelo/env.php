@@ -37,6 +37,16 @@ function cargarEnv(): array
 
 function env(string $clave, $defecto = null)
 {
+    // Una variable de entorno real tiene prioridad sobre el archivo .env. Sirve, por ejemplo, para
+    // restaurar un respaldo con una cuenta de administrador sin editar el .env:
+    //   Linux:       DB_USER=postgres DB_PASS=... php database/restaurar_respaldo.php ...
+    //   PowerShell:  $env:DB_USER='postgres'; $env:DB_PASS='...'; php database\restaurar_respaldo.php ...
+    if (PHP_SAPI === 'cli') {
+        $real = getenv($clave);
+        if ($real !== false && $real !== '') {
+            return $real;
+        }
+    }
     $vars = cargarEnv();
     return array_key_exists($clave, $vars) ? $vars[$clave] : $defecto;
 }
