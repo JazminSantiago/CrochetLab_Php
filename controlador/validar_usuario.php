@@ -71,14 +71,20 @@ class ValidarUsuario
             return ['success' => false, 'mensaje' => 'Tu cuenta ha sido desactivada. Contacta al administrador.'];
         }
 
-        // Un Editor (tejedor) debe tener su registro de empleado
-        if ($user['rol'] === 'Editor') {
-            $stmt2 = $this->conexion->prepare("SELECT id FROM empleados WHERE usuario_id = :uid");
-            $stmt2->execute([':uid' => $user['id']]);
-            if (!$stmt2->fetch()) {
-                registrarAcceso($user['id'], $identificador, 'login_fallido', 'sin_registro_empleado');
-                return ['success' => false, 'mensaje' => 'Tu cuenta aún no ha sido habilitada. Contacta al administrador.'];
-            }
+        // Un rol de tejedor (con "mis asignaciones" pero sin dashboard) debe tener su registro de empleado
+        $stmt2 = $this->conexion->prepare(
+            "SELECT
+                EXISTS (SELECT 1 FROM rol_permisos rp JOIN permisos p ON p.id = rp.permiso_id
+                        WHERE rp.rol_id = :rol1 AND p.area = 'mis_asignaciones' AND p.accion = 'lectura')
+                AND NOT EXISTS (SELECT 1 FROM rol_permisos rp JOIN permisos p ON p.id = rp.permiso_id
+                        WHERE rp.rol_id = :rol2 AND p.area = 'dashboard' AND p.accion = 'lectura') AS es_tejedor,
+                EXISTS (SELECT 1 FROM empleados WHERE usuario_id = :uid) AS tiene_registro"
+        );
+        $stmt2->execute([':rol1' => $user['rol_id'], ':rol2' => $user['rol_id'], ':uid' => $user['id']]);
+        $chk = $stmt2->fetch();
+        if ($chk && $chk['es_tejedor'] && !$chk['tiene_registro']) {
+            registrarAcceso($user['id'], $identificador, 'login_fallido', 'sin_registro_empleado');
+            return ['success' => false, 'mensaje' => 'Tu cuenta aún no ha sido habilitada. Contacta al administrador.'];
         }
 
         if ($user['totp_activo']) {

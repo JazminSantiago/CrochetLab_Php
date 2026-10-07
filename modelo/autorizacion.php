@@ -92,8 +92,40 @@ function rutaInicio(): ?string
     $base = appBase();
     if (tienePermiso('dashboard', 'lectura'))        return $base . '/vista/menu_principal.php';
     if (tienePermiso('mis_asignaciones', 'lectura')) return $base . '/vista/menu_tejedor.php';
-    if (tienePermiso('contenido', 'lectura'))        return $base . '/vista/menu_usuario.php';
+    if (tienePermiso('contenido', 'lectura') || tienePermiso('mis_pedidos', 'lectura'))
+        return $base . '/vista/menu_usuario.php';
+    // Roles creados por el administrador: inicio genérico con los módulos que sí puede abrir
+    if (modulosDisponibles())                        return $base . '/vista/inicio.php';
     return null;
+}
+
+// Módulos que el usuario actual puede abrir según sus permisos de lectura.
+// Cada elemento: [área, ruta relativa a la raíz de la app, nombre, icono]
+function modulosDisponibles(): array
+{
+    $mapa = [
+        ['dashboard',        'vista/dashboard.php',                      'Dashboard',            '📊'],
+        ['catalogo',         'vista/catalogo/index_catalogo.php',        'Catálogo',             '🧶'],
+        ['pedidos',          'vista/pedidos/index_pedidos.php',          'Pedidos',              '📦'],
+        ['empleados',        'vista/empleados/index_empleados.php',      'Empleados',            '🧑‍🔧'],
+        ['asignaciones',     'vista/asignaciones/index_asignaciones.php','Asignaciones',         '📋'],
+        ['reportes',         'vista/reportes/index_reportes.php',        'Reportes',             '📈'],
+        ['patrones',         'vista/patrones/index_patrones.php',        'Patrones',             '📐'],
+        ['usuarios',         'vista/usuarios.php',                       'Usuarios',             '👥'],
+        ['roles',            'vista/roles.php',                          'Roles y permisos',     '🛡️'],
+        ['auditoria',        'vista/auditoria.php',                      'Auditoría y accesos',  '🧾'],
+        ['mis_asignaciones', 'vista/asignaciones/mis_asignaciones.php',  'Mis asignaciones',     '🧵'],
+        ['mis_patrones',     'vista/patrones/mis_patrones.php',          'Patrones aprobados',   '📐'],
+        ['mi_progreso',      'vista/mi_progreso.php',                    'Mi progreso',          '🏅'],
+        ['mis_pedidos',      'vista/mis_pedidos.php',                    'Mis pedidos',          '🛍️'],
+    ];
+    $out = [];
+    foreach ($mapa as [$area, $ruta, $nombre, $icono]) {
+        if (tienePermiso($area, 'lectura')) {
+            $out[] = ['ruta' => $ruta, 'nombre' => $nombre, 'icono' => $icono];
+        }
+    }
+    return $out;
 }
 
 function cerrarSesionLocal(): void

@@ -1,30 +1,27 @@
 <?php
 // vista/menu_usuario.php
-// Panel de solo lectura para el rol "Usuario Regular": consulta catálogo y patrones aprobados.
+// Panel del cliente (rol "Usuario Regular"): consulta el catálogo y entra a "Mis pedidos".
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
 require_once __DIR__ . '/../modelo/autorizacion.php';
-requierePermiso('contenido', 'lectura');
+requiereSesion();
+$veCatalogo = tienePermiso('contenido', 'lectura');
+$vePedidos  = tienePermiso('mis_pedidos', 'lectura');
+if (!$veCatalogo && !$vePedidos) {
+    denegarAcceso('contenido', 'lectura');
+}
 
 $nombre  = $_SESSION['nombre'];
 $usuario = $_SESSION['usuario'];
 
 $db = (new Conexion())->conectar();
 
-$productos = $db->query(
-    "SELECT c.nombre, c.descripcion, c.precio, c.imagen_ruta, cat.nombre AS categoria
+$productos = !$veCatalogo ? [] : $db->query(
+    "SELECT c.id, c.nombre, c.descripcion, c.precio, c.imagen_ruta, cat.nombre AS categoria
      FROM catalogo c
      LEFT JOIN categorias cat ON cat.id = c.categoria_id
      WHERE c.activo = TRUE
      ORDER BY cat.nombre ASC NULLS LAST, c.nombre ASC"
-)->fetchAll();
-
-$patrones = $db->query(
-    "SELECT p.titulo, p.instrucciones, p.imagen_ruta, c.nombre AS producto_nombre
-     FROM patrones p
-     LEFT JOIN catalogo c ON c.id = p.catalogo_id
-     WHERE p.estado = 'aprobado'
-     ORDER BY c.nombre ASC NULLS LAST, p.titulo ASC"
 )->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -32,7 +29,7 @@ $patrones = $db->query(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrochetLab — Catálogo y Patrones</title>
+    <title>CrochetLab — Catálogo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
@@ -412,6 +409,9 @@ $patrones = $db->query(
         .prod-name { font-family: 'DM Serif Display', serif; font-size: 18px; margin: 4px 0 6px; }
         .prod-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
         .prod-price { margin-top: 10px; font-weight: 800; color: var(--coral-dark); }
+        .cta { display:inline-block; margin-top:12px; padding:9px 16px; border-radius:10px; background:var(--coral); color:#fff; font-weight:800; font-size:13.5px; text-decoration:none; }
+        .cta:hover { background:var(--coral-dark); }
+        .cta.grande { padding:12px 22px; font-size:15px; margin:0 0 24px; }
         .vacio { color: var(--text-soft); padding: 8px 2px 24px; }
         .patron-detalle summary { cursor: pointer; font-weight: 700; color: var(--navy-light); margin-top: 10px; }
         .patron-detalle p { white-space: pre-line; font-size: 13.5px; color: var(--text-soft); margin-top: 8px; line-height: 1.55; }
@@ -470,7 +470,7 @@ $patrones = $db->query(
         <div class="welcome-banner">
             <div class="welcome-text">
                 <h1>¡Hola, <span><?php echo htmlspecialchars($nombre); ?></span>! 🧶</h1>
-                <p>Explora los productos de CrochetLab y consulta nuestros patrones.</p>
+                <p>Explora los productos de CrochetLab y haz tus pedidos.</p>
             </div>
             <div class="welcome-badge">
                 <div class="date">Hoy</div>
@@ -478,6 +478,11 @@ $patrones = $db->query(
             </div>
         </div>
 
+        <?php if ($vePedidos): ?>
+            <a class="cta grande" href="mis_pedidos.php">🧶 Mis pedidos / Hacer un pedido</a>
+        <?php endif; ?>
+
+        <?php if ($veCatalogo): ?>
         <div class="section-title">Catálogo</div>
         <?php if (!$productos): ?>
             <p class="vacio">Aún no hay productos disponibles.</p>
@@ -497,37 +502,15 @@ $patrones = $db->query(
                     <?php if ($p['precio'] !== null): ?>
                         <div class="prod-price">$<?php echo number_format((float)$p['precio'], 2); ?></div>
                     <?php endif; ?>
+                    <?php if ($vePedidos): ?>
+                        <a class="cta" href="mis_pedidos.php?producto=<?php echo (int)$p['id']; ?>">Pedir</a>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>
 
-        <div class="section-title" style="margin-top:36px;">Patrones</div>
-        <?php if (!$patrones): ?>
-            <p class="vacio">Aún no hay patrones publicados.</p>
-        <?php else: ?>
-        <div class="menu-grid">
-            <?php foreach ($patrones as $pt): ?>
-            <div class="prod-card">
-                <?php if (!empty($pt['imagen_ruta'])): ?>
-                    <img class="prod-img" src="../<?php echo htmlspecialchars($pt['imagen_ruta']); ?>" alt="">
-                <?php else: ?>
-                    <div class="prod-img-empty">📐</div>
-                <?php endif; ?>
-                <div class="prod-body">
-                    <div class="prod-cat"><?php echo htmlspecialchars($pt['producto_nombre'] ?? 'General'); ?></div>
-                    <div class="prod-name"><?php echo htmlspecialchars($pt['titulo']); ?></div>
-                    <?php if (!empty($pt['instrucciones'])): ?>
-                    <details class="patron-detalle">
-                        <summary>Ver instrucciones</summary>
-                        <p><?php echo htmlspecialchars($pt['instrucciones']); ?></p>
-                    </details>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
         <?php endif; ?>
 
     </div>

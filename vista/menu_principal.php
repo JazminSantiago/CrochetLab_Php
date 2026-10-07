@@ -570,6 +570,24 @@ $usuario = $_SESSION['usuario'];
                 <div class="card-desc">Cambia tu contraseña y gestiona los roles de administrador del sistema.</div>
             </a>
 
+            <?php if (tienePermiso('usuarios', 'lectura')): ?>
+            <!-- Usuarios -->
+            <a href="usuarios.php" class="menu-card card-config">
+                <div class="card-icon-wrap">👥</div>
+                <div class="card-title">Usuarios</div>
+                <div class="card-desc">Todas las cuentas registradas: asigna o revoca roles, activa, desactiva y desbloquea.</div>
+            </a>
+            <?php endif; ?>
+
+            <?php if (tienePermiso('roles', 'lectura')): ?>
+            <!-- Roles y permisos -->
+            <a href="roles.php" class="menu-card card-config">
+                <div class="card-icon-wrap">🛡️</div>
+                <div class="card-title">Roles y Permisos</div>
+                <div class="card-desc">Crea roles y define qué puede leer, escribir o eliminar cada uno en cada área.</div>
+            </a>
+            <?php endif; ?>
+
             <?php if (tienePermiso('auditoria', 'lectura')): ?>
             <!-- Auditoría y Accesos -->
             <a href="auditoria.php" class="menu-card card-config">
