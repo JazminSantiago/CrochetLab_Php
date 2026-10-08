@@ -99,6 +99,38 @@ docs/                Documentación de cada etapa
 | `restaurar_respaldo.php` | Restaura un respaldo en una base nueva (con una cuenta que pueda crear bases; ver `docs/GUIA_LAB.md`) |
 | `usuario_app.sql` | Crea el usuario `crochetlab_app` con permisos mínimos (la app no debe usar `postgres`) |
 
+## Decisiones de seguridad en PHP
+
+PHP no es inseguro por sí mismo: lo que importa es cómo se escribe el código. Estas son las decisiones que se tomaron y dónde verlas.
+
+| Riesgo | Qué se hace | Dónde |
+|---|---|---|
+| Inyección SQL | Consultas preparadas con PDO (`prepare` + parámetros). Donde se usa `query()` el SQL es fijo y no incluye datos del usuario. | `controlador/`, `modelo/` |
+| XSS | La salida se escapa con `htmlspecialchars` en las vistas. | `vista/` |
+| CSRF | Token aleatorio por sesión (`random_bytes`) en los formularios, comparado con `hash_equals`. | `modelo/seguridad.php` |
+| Contraseñas | Hash bcrypt con `cost` 12; nunca se guardan en claro. Política de longitud y complejidad. | `modelo/seguridad.php` |
+| Fuerza bruta | Bloqueo de la cuenta 15 minutos tras 5 intentos fallidos. | `modelo/seguridad.php` |
+| Sesiones | `session_regenerate_id(true)` al iniciar sesión y al cambiar contraseña (evita fijación de sesión). | `controlador/validar_usuario.php` |
+| Segundo factor | TOTP de 6 dígitos (RFC 6238) con secreto de 160 bits. El secreto se guarda cifrado. | `modelo/seguridad.php` |
+| Control de acceso | Roles y permisos leídos de la base de datos (lectura, escritura, eliminación por área). Cada página exige su permiso y responde 403 si no lo tiene; el menú solo muestra lo permitido. | `modelo/autorizacion.php` |
+| Datos sensibles | Columnas cifradas con AES-256-GCM (IV aleatorio por valor, prefijo `enc:v1:`); la clave vive en el `.env`, fuera de la base. | `modelo/cifrado.php` |
+| Respaldos | Archivo cifrado con AES-256-GCM (cabecera `CLBK1`), verificado al crearse, con retención configurable. | `modelo/respaldo.php` |
+| Privilegios en la base | La aplicación usa el rol `crochetlab_app` con permisos mínimos, no `postgres`. | `database/usuario_app.sql` |
+| Tráfico | Conexión a la base con TLS (`DB_SSLMODE=require`) y HTTPS en el servidor. | `docs/GUIA_LAB.md` |
+| Trazabilidad | Bitácora de accesos, intentos fallidos y cambios de permisos. | `vista/auditoria.php` |
+| Secretos | Ninguna credencial en el repositorio; todo sale del `.env`. | `config.php`, `env.ejemplo` |
+
+### Validación del correo
+
+El correo se valida en el servidor con `filter_var($email, FILTER_VALIDATE_EMAIL)` y un límite de 150 caracteres. No se usa ninguna API externa. Esto comprueba el formato, no que el buzón exista.
+
+### Limitaciones conocidas
+
+- No hay verificación de correo por enlace al registrarse.
+- No hay límite de intentos por IP, solo por cuenta.
+- Faltan cabeceras de seguridad globales (CSP, `X-Frame-Options`); hoy solo `Cache-Control` y `Referrer-Policy` en las vistas de cuenta y administración.
+- La clave de cifrado no tiene rotación automática; el prefijo `enc:v1:` deja preparada la migración a otra versión.
+
 ## Seguridad: buenas prácticas para desplegar
 
 - `config.php` no contiene credenciales: todo sale del `.env`. Con `APP_DEBUG=false` (por defecto) los errores no se muestran en pantalla.

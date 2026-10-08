@@ -515,60 +515,76 @@ $usuario = $_SESSION['usuario'];
         <div class="menu-grid">
 
             <!-- Dashboard -->
+            <?php if (tienePermiso('dashboard', 'lectura')): ?>
             <a href="dashboard.php" class="menu-card card-dashboard">
                 <div class="card-icon-wrap">📊</div>
                 <div class="card-title">Dashboard</div>
                 <div class="card-desc">Resumen general de productividad, pedidos activos y alertas del día.</div>
             </a>
+            <?php endif; ?>
 
             <!-- Catálogo -->
+            <?php if (tienePermiso('catalogo', 'lectura')): ?>
             <a href="catalogo/index_catalogo.php" class="menu-card card-catalogo">
                 <div class="card-icon-wrap">🧶</div>
                 <div class="card-title">Catálogo</div>
                 <div class="card-desc">Productos fijos de CrochetLab: bolsos, ropa, amigurumis y accesorios. Control de stock mínimo.</div>
             </a>
+            <?php endif; ?>
 
             <!-- Pedidos -->
+            <?php if (tienePermiso('pedidos', 'lectura')): ?>
             <a href="pedidos/index_pedidos.php" class="menu-card card-pedidos">
                 <div class="card-icon-wrap">📦</div>
                 <div class="card-title">Pedidos</div>
                 <div class="card-desc">Gestión de pedidos estándar y personalizados. Seguimiento de fechas límite de entrega.</div>
                 <div class="badge-critical">⚠ Seguimiento crítico</div>
             </a>
+            <?php endif; ?>
 
             <!-- Empleados -->
+            <?php if (tienePermiso('empleados', 'lectura')): ?>
             <a href="empleados/index_empleados.php" class="menu-card card-empleados">
                 <div class="card-icon-wrap">👷</div>
                 <div class="card-title">Empleados</div>
                 <div class="card-desc">Registro del equipo, historial de trabajo y seguimiento de productividad individual.</div>
             </a>
+            <?php endif; ?>
 
             <!-- Asignaciones -->
+            <?php if (tienePermiso('asignaciones', 'lectura')): ?>
             <a href="asignaciones/index_asignaciones.php" class="menu-card card-asignaciones">
                 <div class="card-icon-wrap">📋</div>
                 <div class="card-title">Asignaciones</div>
                 <div class="card-desc">Asigna pedidos y tareas a empleados. Controla quién hace qué y en qué plazo.</div>
             </a>
+            <?php endif; ?>
 
             <!-- Reportes -->
+            <?php if (tienePermiso('reportes', 'lectura')): ?>
             <a href="reportes/index_reportes.php" class="menu-card card-reportes">
                 <div class="card-icon-wrap">📈</div>
                 <div class="card-title">Reportes</div>
                 <div class="card-desc">Reportes de productividad por empleado, pedidos completados, retrasados y tendencias.</div>
             </a>
+            <?php endif; ?>
 
+            <?php if (tienePermiso('patrones', 'lectura')): ?>
             <a href="patrones/index_patrones.php" class="menu-card card-patrones">
                 <div class="card-icon-wrap">📐</div>
                 <div class="card-title">Patrones</div>
                 <div class="card-desc">Gestiona los patrones del catálogo y revisa contribuciones de tejedores.</div>
             </a>
+            <?php endif; ?>
 
             <!-- Configuración -->
+            <?php if (tienePermiso('usuarios', 'lectura')): ?>
             <a href="permisos_acceso.php" class="menu-card card-config">
                 <div class="card-icon-wrap">🔐</div>
                 <div class="card-title">Permisos y Acceso</div>
                 <div class="card-desc">Cambia tu contraseña y gestiona los roles de administrador del sistema.</div>
             </a>
+            <?php endif; ?>
 
             <?php if (tienePermiso('usuarios', 'lectura')): ?>
             <!-- Usuarios -->
