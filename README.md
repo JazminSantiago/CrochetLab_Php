@@ -94,6 +94,7 @@ docs/                Documentación de cada etapa
 |---|---|
 | `crear_admin.php` | Crea el primer superadministrador |
 | `generar_clave.php` | Genera una clave AES-256 para el `.env` |
+| `generar_par_claves.php` | Genera el par de llaves RSA para la firma digital de comprobantes (ver `docs/CRIPTOGRAFIA.md`) |
 | `cifrar_datos_existentes.php` | Cifra datos que estaban en texto plano (se puede repetir) |
 | `respaldo.php` | Respaldo cifrado a USB / disco externo (programar cada 24 h) |
 | `restaurar_respaldo.php` | Restaura un respaldo en una base nueva (con una cuenta que pueda crear bases; ver `docs/GUIA_LAB.md`) |
@@ -117,6 +118,7 @@ PHP no es inseguro por sí mismo: lo que importa es cómo se escribe el código.
 | Respaldos | Archivo cifrado con AES-256-GCM (cabecera `CLBK1`), verificado al crearse, con retención configurable. | `modelo/respaldo.php` |
 | Privilegios en la base | La aplicación usa el rol `crochetlab_app` con permisos mínimos, no `postgres`. | `database/usuario_app.sql` |
 | Tráfico | Conexión a la base con TLS (`DB_SSLMODE=require`) y HTTPS en el servidor. | `docs/GUIA_LAB.md` |
+| Integridad y autenticidad | Firma digital RSA-2048 + SHA-256 del comprobante de pedido; verificable con la llave pública, también con OpenSSL fuera del sistema. La llave privada va cifrada y fuera del repositorio. | `modelo/firma.php`, `docs/CRIPTOGRAFIA.md` |
 | Trazabilidad | Bitácora de accesos, intentos fallidos y cambios de permisos. | `vista/auditoria.php` |
 | Secretos | Ninguna credencial en el repositorio; todo sale del `.env`. | `config.php`, `env.ejemplo` |
 

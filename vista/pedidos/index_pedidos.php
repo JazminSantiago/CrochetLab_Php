@@ -356,6 +356,8 @@ function diasRestantes($fecha) {
                                     onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($p)); ?>)">✏️</button>
                                 <button class="btn-action btn-estado"
                                     onclick="abrirModalEstado(<?php echo $p['id']; ?>, '<?php echo $p['estado']; ?>')">🔄 Estado</button>
+                                <a class="btn-action btn-edit" style="text-decoration:none;display:inline-flex;align-items:center;"
+                                    href="../comprobante_pedido.php?id=<?php echo (int)$p['id']; ?>" title="Comprobante con firma digital">🧾 Comprobante</a>
                             </div>
                         </td>
                     </tr>
@@ -440,6 +442,8 @@ function diasRestantes($fecha) {
                                     onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($p)); ?>)">✏️</button>
                                 <button class="btn-action btn-estado"
                                     onclick="abrirModalEstado(<?php echo $p['id']; ?>, '<?php echo $p['estado']; ?>')">🔄 Estado</button>
+                                <a class="btn-action btn-edit" style="text-decoration:none;display:inline-flex;align-items:center;"
+                                    href="../comprobante_pedido.php?id=<?php echo (int)$p['id']; ?>" title="Comprobante con firma digital">🧾 Comprobante</a>
                             </div>
                         </td>
                     </tr>

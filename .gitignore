@@ -8,3 +8,7 @@ correos_salida/
 # Respaldos de la base de datos (si se guardan dentro del proyecto)
 respaldos/
 *.dump.enc
+
+# Llaves de firma digital: la privada NUNCA se sube al repositorio
+claves/
+*.pem
