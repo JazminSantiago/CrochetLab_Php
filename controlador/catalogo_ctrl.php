@@ -1,4 +1,4 @@
-<?php
+<?php require_once __DIR__ . "/../modelo/subida_segura.php";
 // controlador/catalogo_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
@@ -144,7 +144,7 @@ class CatalogoCtrl
         if (!$archivo || $archivo['size'] === 0) return null;
 
         $permitidos = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!in_array($archivo['type'], $permitidos)) {
+        if (($ext = extensionImagenSegura($archivo["tmp_name"] ?? "")) === null) {
             return ['error' => 'Solo se permiten imágenes JPG, PNG o WEBP'];
         }
 
@@ -152,13 +152,13 @@ class CatalogoCtrl
             return ['error' => 'La imagen no debe superar 2MB'];
         }
 
-        $ext      = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+        // $ext ya viene de extensionImagenSegura()
         $nombre   = 'catalogo_' . uniqid() . '.' . $ext;
         $destino  = __DIR__ . '/../assets/uploads/catalogo/' . $nombre;
 
         // Crear carpeta si no existe
         if (!file_exists(dirname($destino))) {
-            mkdir(dirname($destino), 0777, true);
+            mkdir(dirname($destino), 0770, true);
         }
 
         if (!move_uploaded_file($archivo['tmp_name'], $destino)) {

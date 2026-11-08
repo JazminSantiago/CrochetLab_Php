@@ -1,4 +1,4 @@
-<?php
+<?php require_once __DIR__ . "/../modelo/subida_segura.php";
 // controlador/asignaciones_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
@@ -191,19 +191,19 @@ class AsignacionesCtrl
             return ['success' => false, 'mensaje' => 'Debes seleccionar una imagen'];
 
         $permitidos = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!in_array($archivo['type'], $permitidos))
+        if (($ext = extensionImagenSegura($archivo["tmp_name"] ?? "")) === null)
             return ['success' => false, 'mensaje' => 'Solo se permiten imágenes JPG, PNG o WEBP'];
 
         if ($archivo['size'] > 8 * 1024 * 1024)
             return ['success' => false, 'mensaje' => 'La imagen no debe superar 8MB'];
 
-        $ext     = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+        // $ext ya viene de extensionImagenSegura()
         $nombre  = 'prueba_' . $asignacion_id . '_' . uniqid() . '.' . $ext;
         $dir     = __DIR__ . '/../assets/uploads/pruebas/';
         $destino = $dir . $nombre;
 
         if (!file_exists($dir))
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0770, true);
 
         if (!move_uploaded_file($archivo['tmp_name'], $destino))
             return ['success' => false, 'mensaje' => 'Error al guardar la imagen'];

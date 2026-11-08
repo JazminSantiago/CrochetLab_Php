@@ -1,4 +1,4 @@
-<?php
+<?php require_once __DIR__ . "/../modelo/subida_segura.php";
 // controlador/patrones_ctrl.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../modelo/conexion.php';
@@ -213,17 +213,17 @@ class PatronesCtrl
         if (!$archivo || $archivo['size'] === 0) return null;
 
         $permitidos = ['image/jpeg','image/png','image/webp'];
-        if (!in_array($archivo['type'], $permitidos))
+        if (($ext = extensionImagenSegura($archivo["tmp_name"] ?? "")) === null)
             return ['error' => 'Solo se permiten imágenes JPG, PNG o WEBP'];
         if ($archivo['size'] > 5 * 1024 * 1024)
             return ['error' => 'La imagen no debe superar 5MB'];
 
-        $ext     = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+        // $ext ya viene de extensionImagenSegura()
         $nombre  = 'patron_' . uniqid() . '.' . $ext;
         $destino = __DIR__ . '/../assets/uploads/patrones/' . $nombre;
 
         if (!file_exists(dirname($destino)))
-            mkdir(dirname($destino), 0777, true);
+            mkdir(dirname($destino), 0770, true);
 
         if (!move_uploaded_file($archivo['tmp_name'], $destino))
             return ['error' => 'Error al guardar la imagen'];
