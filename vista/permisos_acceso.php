@@ -212,6 +212,7 @@ $tejedores   = $ctrl->listarTejedores();
         </div>
     <?php endif; ?>
 
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;"><a href="usuarios.php" class="btn-primary" style="flex:1;min-width:180px;text-align:center;text-decoration:none;">👥 Usuarios</a><a href="roles.php" class="btn-primary" style="flex:1;min-width:180px;text-align:center;text-decoration:none;">🛡️ Roles y permisos</a><a href="auditoria.php" class="btn-primary" style="flex:1;min-width:180px;text-align:center;text-decoration:none;">📋 Auditoría y accesos</a></div>
     <div class="two-col">
 
         <!-- CAMBIAR CONTRASEÑA -->
@@ -232,7 +233,7 @@ $tejedores   = $ctrl->listarTejedores();
                 </div>
                 <div class="form-group">
                     <label>Nueva contraseña <span class="required">*</span></label>
-                    <input type="password" name="nueva" placeholder="Mínimo 6 caracteres">
+                    <input type="password" name="nueva" placeholder="Mínimo 8, con mayúsculas, minúsculas y números">
                 </div>
                 <div class="form-group">
                     <label>Confirmar nueva contraseña <span class="required">*</span></label>
