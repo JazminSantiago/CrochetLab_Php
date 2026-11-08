@@ -289,8 +289,8 @@ $nombre = $_SESSION['nombre'];
 <div class="container">
 
     <div class="greeting">
-        <h2>Buenos días, <?php echo htmlspecialchars($nombre); ?> 👋</h2>
-        <p>Esto es lo que está pasando hoy · <?php echo date('l d \d\e F \d\e Y', strtotime('today')); ?></p>
+        <h2>Hola, <?php echo htmlspecialchars($nombre); ?> 👋</h2>
+        <p>Esto es lo que está pasando hoy · <?php $f = new DateTime("now", new DateTimeZone("America/Mexico_City")); $dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]; $meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]; echo $dias[(int)$f->format("w")] . " " . $f->format("d") . " de " . $meses[(int)$f->format("n") - 1] . " de " . $f->format("Y"); ?></p>
     </div>
 
     <!-- ── TARJETAS RESUMEN ── -->
